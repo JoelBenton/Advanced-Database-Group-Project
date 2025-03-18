@@ -1,0 +1,69 @@
+db.users.insertOne({
+  _id: 1,
+  username: "Username",
+  password_hash: "#######",
+  role: "Admin",
+});
+
+db.medical_staff.insertOne({
+  _id: 1,
+  first_name: "First Name",
+  second_name: "Second Name",
+  specialisation: "Surgery",
+  contact_number: "01245 012345",
+  email: "example@example.com",
+  availability_start_time: "07:00",
+  availability_end_time: "17:00",
+  role: "Doctor",
+});
+
+db.patients.insertOne({
+  _id: 1,
+  first_name: "First Name",
+  last_name: "Last Name",
+  date_of_birth: "01/01/2001",
+  contact_number: "01234 012345",
+  email: "Example@Example.com",
+  address: {
+    postcode: "AB12 5AB",
+    house_number: 1,
+    address: "Example Address, Example, Example",
+  },
+  emergency_contact: {
+    name: "John",
+    surname: "Doe",
+    email: "Example@Example.com",
+    phone_number: "01234 012345",
+    relationship: "Parent",
+  },
+  medical_records: [
+    {
+      doctor_id: 1,
+      record_date: "01/01/2001",
+      diagnosis: "Example Diagnosis",
+      treatment: "Example Treatment",
+      prescriptions: [
+        {
+          medication: "Example Drug",
+          dosage: "Example Dosage",
+          duration: "1 Day",
+          instructions: "Example Instructions",
+        },
+      ],
+      notes: "Example Notes",
+    },
+  ],
+  appointments: [
+    {
+      time_slot: "12:00 - 12:30",
+      room: {
+        name: "VH1.0.1",
+        equipment: "Blood Test",
+      },
+      urgency: "High",
+      reason_for: "High Blood Pressure",
+      doctor_id: 1,
+      status: "Confirmed",
+    },
+  ],
+});
