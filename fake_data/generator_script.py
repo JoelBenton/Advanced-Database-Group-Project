@@ -1,6 +1,7 @@
 import json
 import random
 from faker import Faker
+from datetime import datetime, timedelta
 
 # Initialize Faker instance
 fake = Faker()
@@ -26,6 +27,14 @@ def generate_users(num_records):
 def generate_medical_staff(num_records):
     medical_staff = []
     for i in range(num_records):
+        # Generate a random start time between 08:00 AM and 12:00 PM
+        start_hour = random.randint(8, 11)
+        start_minute = random.randint(0, 59)
+        start_time = datetime.strptime(f"{start_hour}:{start_minute:02d}", "%H:%M")
+        
+        # Generate a random end time between 1 hour and 6 hours after the start time
+        end_time = start_time + timedelta(hours=random.randint(1, 6))
+        
         medical_staff.append({
             "_id": i + 1,
             "first_name": fake.first_name(),
@@ -33,8 +42,8 @@ def generate_medical_staff(num_records):
             "specialisation": fake.job(),
             "contact_number": fake.phone_number(),
             "email": fake.email(),
-            "availability_start_time": fake.time(),
-            "availability_end_time": fake.time(),
+            "availability_start_time": start_time.strftime("%H:%M"),
+            "availability_end_time": end_time.strftime("%H:%M"),
             "role": "Doctor",
         })
     return medical_staff
