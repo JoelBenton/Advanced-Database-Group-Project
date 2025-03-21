@@ -1,0 +1,112 @@
+[
+  {
+    "_id": 1,
+    "first_name": "Heather",
+    "second_name": "Roberts",
+    "specialisation": "Research scientist (maths)",
+    "contact_number": "7526194088",
+    "email": "aharmon@example.org",
+    "availability_start_time": "23:04:23",
+    "availability_end_time": "16:02:13",
+    "role": "Doctor"
+  },
+  {
+    "_id": 2,
+    "first_name": "Scott",
+    "second_name": "Thomas",
+    "specialisation": "Mechanical engineer",
+    "contact_number": "9638829970",
+    "email": "melissa72@example.net",
+    "availability_start_time": "00:28:15",
+    "availability_end_time": "16:45:03",
+    "role": "Doctor"
+  },
+  {
+    "_id": 3,
+    "first_name": "James",
+    "second_name": "Anthony",
+    "specialisation": "Materials engineer",
+    "contact_number": "+1-433-803-3333x966",
+    "email": "williamortega@example.org",
+    "availability_start_time": "03:07:25",
+    "availability_end_time": "04:45:26",
+    "role": "Doctor"
+  },
+  {
+    "_id": 4,
+    "first_name": "Laurie",
+    "second_name": "Jones",
+    "specialisation": "Magazine features editor",
+    "contact_number": "(781)840-1201x5469",
+    "email": "jeremyromero@example.org",
+    "availability_start_time": "14:51:32",
+    "availability_end_time": "06:45:33",
+    "role": "Doctor"
+  },
+  {
+    "_id": 5,
+    "first_name": "Nicholas",
+    "second_name": "Austin",
+    "specialisation": "Psychologist, educational",
+    "contact_number": "779-822-1812x939",
+    "email": "lyonschloe@example.org",
+    "availability_start_time": "10:38:47",
+    "availability_end_time": "17:45:19",
+    "role": "Doctor"
+  },
+  {
+    "_id": 6,
+    "first_name": "Ashley",
+    "second_name": "Rhodes",
+    "specialisation": "Engineer, land",
+    "contact_number": "883.835.7170",
+    "email": "garcialorraine@example.com",
+    "availability_start_time": "14:27:00",
+    "availability_end_time": "00:29:32",
+    "role": "Doctor"
+  },
+  {
+    "_id": 7,
+    "first_name": "Steven",
+    "second_name": "Barnes",
+    "specialisation": "Chartered accountant",
+    "contact_number": "574-525-7271",
+    "email": "gyoder@example.net",
+    "availability_start_time": "21:29:41",
+    "availability_end_time": "11:14:21",
+    "role": "Doctor"
+  },
+  {
+    "_id": 8,
+    "first_name": "Christopher",
+    "second_name": "Griffin",
+    "specialisation": "Animal technologist",
+    "contact_number": "310-879-4906x32564",
+    "email": "melissa13@example.net",
+    "availability_start_time": "04:13:25",
+    "availability_end_time": "12:49:41",
+    "role": "Doctor"
+  },
+  {
+    "_id": 9,
+    "first_name": "Jerry",
+    "second_name": "Beltran",
+    "specialisation": "Armed forces technical officer",
+    "contact_number": "8923591729",
+    "email": "johncurry@example.net",
+    "availability_start_time": "17:42:50",
+    "availability_end_time": "03:24:47",
+    "role": "Doctor"
+  },
+  {
+    "_id": 10,
+    "first_name": "Larry",
+    "second_name": "Howard",
+    "specialisation": "Architectural technologist",
+    "contact_number": "894.802.5054",
+    "email": "andrew32@example.org",
+    "availability_start_time": "05:47:16",
+    "availability_end_time": "06:25:02",
+    "role": "Doctor"
+  }
+]
