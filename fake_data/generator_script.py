@@ -7,9 +7,9 @@ from datetime import datetime, timedelta
 fake = Faker()
 
 # Define the number of records for each collection
-num_users = 10         # 10 users
 num_medical_staff = 10  # 10 doctors
-num_patients = 100     # 100 patients
+num_patients = 100      # 100 patients
+num_users = num_medical_staff + num_patients  # Total users
 
 # Sample list of diagnoses and treatments
 diagnoses_treatments = {
@@ -52,12 +52,12 @@ def generate_users(num_records):
             "_id": i + 1,
             "username": fake.user_name(),
             "password_hash": fake.password(),
-            "role": random.choice(['Admin', 'User']),
+            "role": "User",  # Default role, doctors will have role overridden later
         })
     return users
 
 # Generate Medical Staff (Doctors)
-def generate_medical_staff(num_records):
+def generate_medical_staff(num_records, user_ids):
     medical_staff = []
     for i in range(num_records):
         # Generate a random start time between 08:00 AM and 12:00 PM
@@ -65,11 +65,12 @@ def generate_medical_staff(num_records):
         start_minute = random.choice([0, 30])
         start_time = datetime.strptime(f"{start_hour}:{start_minute:02d}", "%H:%M")
         
-        # Generate a random end time between 1 hour and 6 hours after the start time
+        # Generate a random end time
         end_time = start_time + timedelta(hours=8)
-        
+
         medical_staff.append({
             "_id": i + 1,
+            "user_id": user_ids[i],  # Assign user_id
             "first_name": fake.first_name(),
             "second_name": fake.last_name(),
             "specialisation": random.choice(medical_specialisations),
@@ -79,10 +80,11 @@ def generate_medical_staff(num_records):
             "availability_end_time": end_time.strftime("%H:%M"),
             "role": "Doctor",
         })
+    
     return medical_staff
 
 # Generate Patients
-def generate_patients(num_records):
+def generate_patients(num_records, user_ids):
     medications = ["Paracetamol", "Ibuprofen", "Aspirin", "Amoxicillin", "Metformin", "Lisinopril", "Citalopram", "Prednisolone"]
     dosage_formats = ["500mg", "200mg", "100mg", "1g", "2mg", "25mg"]
     instructions = [
@@ -98,6 +100,7 @@ def generate_patients(num_records):
     for i in range(num_records):
         patient = {
             "_id": i + 1,
+            "user_id": user_ids[i],  # Assign user_id
             "first_name": fake.first_name(),
             "last_name": fake.last_name(),
             "date_of_birth": fake.date_of_birth(minimum_age=18, maximum_age=80).strftime("%Y-%m-%d"),
@@ -120,7 +123,7 @@ def generate_patients(num_records):
         }
         
         # Generate medical records and prescriptions for each patient
-        num_medical_records = random.randint(0, 2)  # Random number of records (1 to 3)
+        num_medical_records = random.randint(0, 2)
         for _ in range(num_medical_records):
             diagnosis, treatment = random.choice(list(diagnoses_treatments.items()))
             patient["medical_records"].append({
@@ -132,22 +135,21 @@ def generate_patients(num_records):
                     {
                         "medication": random.choice(medications),
                         "dosage": random.choice(dosage_formats),
-                        "duration": f"{random.randint(1, 14)} Days",  # Random duration between 1 and 14 days
+                        "duration": f"{random.randint(1, 14)} Days",
                         "instructions": random.choice(instructions),
                     }
                 ],
                 "notes": fake.sentence(),
             })
         
-        # Generate appointments with 30-minute time slots
-        num_appointments = random.randint(0, 2)  # Random number of appointments (0 to 2)
+        # Generate appointments
+        num_appointments = random.randint(0, 2)
         for _ in range(num_appointments):
-            hour = random.randint(8, 16)  # Appointments between 08:00 and 16:00
-            minute = random.choice([0, 30])  # 30-minute slots only (on the hour or half-past)
+            hour = random.randint(8, 16)
+            minute = random.choice([0, 30])
             start_time = datetime.strptime(f"{hour}:{minute:02d}", "%H:%M")
             end_time = start_time + timedelta(minutes=30)
             
-            # Randomly choose reason for appointment and corresponding equipment
             reason = random.choice(appointment_reasons)
             equipment = appointment_equipment[reason]
             
@@ -169,8 +171,17 @@ def generate_patients(num_records):
 
 # Generate the data
 users = generate_users(num_users)
-medical_staff = generate_medical_staff(num_medical_staff)
-patients = generate_patients(num_patients)
+
+# Assign user IDs
+medical_staff_user_ids = [user["_id"] for user in users[:num_medical_staff]]
+patient_user_ids = [user["_id"] for user in users[num_medical_staff:]]
+
+medical_staff = generate_medical_staff(num_medical_staff, medical_staff_user_ids)
+patients = generate_patients(num_patients, patient_user_ids)
+
+# Update roles for medical staff in users list
+for user_id in medical_staff_user_ids:
+    users[user_id - 1]["role"] = "Doctor"
 
 # Save to JSON files
 with open('users.json', 'w') as file:
