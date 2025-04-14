@@ -145,16 +145,20 @@ def generate_patients(num_records, user_ids):
         # Generate appointments
         num_appointments = random.randint(0, 2)
         for _ in range(num_appointments):
+            # Random date within the next 30 days
+            appointment_date = datetime.today() + timedelta(days=random.randint(0, 30))
+            
             hour = random.randint(8, 16)
             minute = random.choice([0, 30])
-            start_time = datetime.strptime(f"{hour}:{minute:02d}", "%H:%M")
-            end_time = start_time + timedelta(minutes=30)
-            
+            start_datetime = appointment_date.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            end_datetime = start_datetime + timedelta(minutes=30)
+
             reason = random.choice(appointment_reasons)
             equipment = appointment_equipment[reason]
-            
+
             patient["appointments"].append({
-                "time_slot": f"{start_time.strftime('%H:%M')} - {end_time.strftime('%H:%M')}",
+                "date": start_datetime.strftime("%Y-%m-%d"),
+                "time_slot": f"{start_datetime.strftime('%H:%M')} - {end_datetime.strftime('%H:%M')}",
                 "room": {
                     "name": f"Room {random.randint(1, 10)}",
                     "equipment": equipment,
