@@ -1,6 +1,6 @@
 import { PatientQueryConditions } from "../types/patientQueries";
 
-export function findPatientMultipleConditions (
+export function patientOrFilter (
   conditions: PatientQueryConditions = {}) {
   return {
     $or: [

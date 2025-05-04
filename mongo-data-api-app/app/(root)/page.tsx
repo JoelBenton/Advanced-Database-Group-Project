@@ -1,11 +1,15 @@
 import Image from "next/image";
-import { testDatabaseConnection, getPatientsOrStatement } from "../src/actions";
+import mongo from "../src/mongoIndex";
 import Link from "next/link";
 
 export default async function Home() {
-  const isConnected = await testDatabaseConnection();
-  const patients = await getPatientsOrStatement({ first_name: "Felicia" });
-  console.log("Patients: ", patients);
+  const isConnected = await mongo.testDatabaseConnection();
+
+  // const patients = await mongo.getPatientsOrStatement({ first_name: "Felicia" });
+  const patients = await mongo.getPatientById("100");
+  // const patients = await mongo.retreieveAllPatients();
+
+  console.log(patients);
 
   return (
     <div>
