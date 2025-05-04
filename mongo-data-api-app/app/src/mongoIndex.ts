@@ -4,6 +4,12 @@ import {
   retreieveAllPatients,
   getPatientById,
   deletePatientById,
+  createMedicalStaff,
+  getMedicalStaffById,
+  listDoctersBySpeciality,
+  listAllDocters,
+  listAvailableDoctors,
+  listAvailableDoctorsBySpeciality,
 } from "./mongoActions";
 
 const mongoActions = {
@@ -12,6 +18,13 @@ const mongoActions = {
   retreieveAllPatients,
   getPatientById,
   deletePatientById,
+  createMedicalStaff,
+
+  getMedicalStaffById,
+  listDoctersBySpeciality,
+  listAllDocters,
+  listAvailableDoctors,
+  listAvailableDoctorsBySpeciality,
 };
 
 export default mongoActions;

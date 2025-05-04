@@ -5,7 +5,7 @@ import { deleteOne, findDocuments, insertOne } from "./mongoHelpers";
 import { patientOrFilter } from "./queries/patient";
 import { IDFilter } from "./queries/shared";
 import { PatientQueryConditions } from "./types/patientQueries";
-import { MedicalStaffCreate, MedicalStaffSpecialisationSearch } from "./types/medicalStaffQueries";
+import { MedicalStaffCreate, MedicalStaffSpecialisationSearch, MedicalStaffAvailabilitySearch, MedicalStaffAvailabilitySearchWithSpecialisation } from "./types/medicalStaffQueries";
 
 export async function testDatabaseConnection() {
   let isConnected = false;
@@ -68,5 +68,20 @@ export async function listDoctersBySpeciality(Data: MedicalStaffSpecialisationSe
 
 export async function listAllDocters() {
   const data = await findDocuments("medical_staff", { role: "Doctor" }, { first_name: 1, second_name: 1, specialisation: 1, _id: 0 });
+  return data;
+}
+
+export async function listAvailableDoctors(Data: MedicalStaffAvailabilitySearch) {
+  const data = await findDocuments("medical_staff", Data);
+  return data;
+}
+
+export async function listAvailableDoctorsBySpeciality(Data: MedicalStaffAvailabilitySearchWithSpecialisation) {
+  const data = await findDocuments("medical_staff", {
+    role: Data.role,
+    specialisation: { $regex: new RegExp(Data.specialisation, "i") },
+    availability_start_time: { $lte: Data.availability_start_time },
+    availability_end_time: { $gte: Data.availability_end_time }
+  });
   return data;
 }

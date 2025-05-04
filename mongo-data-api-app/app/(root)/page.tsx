@@ -1,6 +1,4 @@
-import Image from "next/image";
 import mongo from "../src/mongoIndex";
-import Link from "next/link";
 
 export default async function Home() {
   const isConnected = await mongo.testDatabaseConnection();
