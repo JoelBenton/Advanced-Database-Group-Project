@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { format, parse } from "date-fns";
 
 const mockAppointments = [
   {
@@ -27,111 +30,140 @@ const mockAppointments = [
 
 export default function DoctorPage() {
   const [doctorName] = useState("Dr. Jane Watson");
-  const [selectedDate, setSelectedDate] = useState("2025-05-08");
+  const [showDoctorMenu, setShowDoctorMenu] = useState(false);
+
+  const [selectedDate, setSelectedDate] = useState(
+    format(new Date(), "yyyy/MM/dd")
+  );
   const [selectedAppointment, setSelectedAppointment] = useState<any | null>(
     null
   );
+  const [showReschedulePicker, setShowReschedulePicker] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState<Date | null>(null);
+
   const [medicalRecord, setMedicalRecord] = useState({
     date: "",
     diagnosis: "",
     treatment: "",
-    prescription: {
-      medication: "",
-      dosage: "",
-      duration: "",
-      instructions: "",
-    },
     notes: "",
   });
 
-  const appointments = mockAppointments.filter((a) => a.date === selectedDate);
+  const [showPrescriptionForm, setShowPrescriptionForm] = useState(false);
+  const [prescriptionInput, setPrescriptionInput] = useState({
+    medication: "",
+    dosage: "",
+    duration: "",
+    instructions: "",
+  });
+  const [prescriptions, setPrescriptions] = useState<any[]>([]);
 
-  const handleMarkComplete = () => {
-    if (selectedAppointment) {
-      setSelectedAppointment({ ...selectedAppointment, status: "Completed" });
-    }
-  };
+  const appointments = mockAppointments.filter(
+    (a) => a.date === selectedDate.replaceAll("/", "-")
+  );
 
   const handleRecordChange = (e: any) => {
     const { name, value } = e.target;
-    if (name in medicalRecord.prescription) {
-      setMedicalRecord({
-        ...medicalRecord,
-        prescription: { ...medicalRecord.prescription, [name]: value },
+    setMedicalRecord((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handlePrescriptionInputChange = (e: any) => {
+    const { name, value } = e.target;
+    setPrescriptionInput((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddPrescription = () => {
+    if (prescriptionInput.medication.trim() !== "") {
+      setPrescriptions((prev) => [...prev, prescriptionInput]);
+      setPrescriptionInput({
+        medication: "",
+        dosage: "",
+        duration: "",
+        instructions: "",
       });
-    } else {
-      setMedicalRecord({ ...medicalRecord, [name]: value });
+      setShowPrescriptionForm(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
+      {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Appointments Dashboard</h1>
-        <span className="text-lg font-medium text-gray-700">
-          👩‍⚕️ {doctorName}
-        </span>
-      </div>
 
-      {/* Date Selector */}
-      <div className="mb-6">
-        <label className="mr-2 font-medium">📅 Select Date:</label>
-        <select
-          value={selectedDate}
-          onChange={(e) => {
-            setSelectedAppointment(null);
-            setSelectedDate(e.target.value);
-          }}
-          className="border rounded px-3 py-2 bg-white"
-        >
-          {Array.from({ length: 7 }).map((_, i) => {
-            const date = new Date();
-            date.setDate(date.getDate() + i);
-            const iso = date.toISOString().split("T")[0];
-            return (
-              <option key={iso} value={iso}>
-                {iso}
-              </option>
-            );
-          })}
-        </select>
-      </div>
+        {/* Doctor Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setShowDoctorMenu((prev) => !prev)}
+            className="text-lg font-medium text-gray-700 border border-gray-300 px-4 py-2 rounded-[20px] shadow bg-white hover:bg-[rgb(59,130,246)] hover:text-white transition duration-150"
+          >
+            👩‍⚕️ {doctorName}
+          </button>
 
-      {/* Appointment List */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {appointments.length === 0 ? (
-          <p>No appointments for this date.</p>
-        ) : (
-          appointments.map((app) => (
-            <div
-              key={app.id}
-              className={`p-4 rounded shadow border cursor-pointer ${
-                selectedAppointment?.id === app.id
-                  ? "bg-blue-100 border-blue-500"
-                  : "bg-white hover:bg-blue-50"
-              }`}
-              onClick={() => setSelectedAppointment(app)}
-            >
-              <h2 className="font-semibold text-lg">
-                {app.time} - {app.patientName}
-              </h2>
-              <p className="text-sm text-gray-600">{app.reason}</p>
-              <p className="text-sm text-gray-500">
-                Room: {app.room} | Urgency: {app.urgency}
-              </p>
-              <span className="text-sm font-medium text-gray-700">
-                Status: {app.status}
-              </span>
+          {showDoctorMenu && (
+            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-[20px] shadow-md z-10">
+              <button
+                onClick={() => (window.location.href = "/")}
+                className="w-full text-left px-4 py-2 rounded-[20px] transition duration-150 hover:bg-[rgb(59,130,246)] hover:text-white"
+              >
+                🔄 Switch User
+              </button>
             </div>
-          ))
-        )}
+          )}
+        </div>
       </div>
 
-      {/* Appointment Detail & Form */}
+      {/* Date Selector + Appointment List */}
+      <div className="bg-white rounded-lg shadow-md border-2 border-gray-300 p-6 mb-10">
+        <div className="mb-6">
+          <label className="mr-2 font-medium block mb-1">📅 Select Date:</label>
+          <DatePicker
+            selected={parse(selectedDate, "yyyy/MM/dd", new Date())}
+            onChange={(date: Date | null) => {
+              const formatted = date ? format(date, "yyyy/MM/dd") : "";
+              setSelectedAppointment(null);
+              setSelectedDate(formatted);
+            }}
+            dateFormat="yyyy/MM/dd"
+            placeholderText="YYYY/MM/DD"
+            className="border border-gray-400 p-2 rounded w-full"
+          />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {appointments.length === 0 ? (
+            <p>No appointments for this date.</p>
+          ) : (
+            appointments.map((app) => (
+              <div
+                key={app.id}
+                className={`p-4 rounded-lg border-2 shadow-sm cursor-pointer transition ${
+                  selectedAppointment?.id === app.id
+                    ? "bg-[rgb(59,130,246)] bg-opacity-20 border-[rgb(59,130,246)]"
+                    : "bg-white border-gray-300 hover:bg-[rgb(59,130,246)] hover:bg-opacity-20 hover:border-[rgb(59,130,246)]"
+                }`}
+                onClick={() => setSelectedAppointment(app)}
+              >
+                <h2 className="font-semibold text-lg">
+                  {app.time} - {app.patientName}
+                </h2>
+                <p className="text-sm text-gray-600">{app.reason}</p>
+                <p className="text-sm text-gray-500">
+                  Room: {app.room} | Urgency: {app.urgency}
+                </p>
+                <span className="text-sm font-medium text-gray-700">
+                  Status: {app.status}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Appointment Details */}
       {selectedAppointment && (
-        <div className="mt-10 bg-white p-6 rounded shadow-md">
+        <div className="bg-white p-6 rounded-lg shadow-lg border-2 border-gray-300">
           <h2 className="text-2xl font-semibold mb-4">Appointment Details</h2>
-          <div className="grid gap-2 text-sm">
+          <div className="grid gap-2 text-sm mb-4">
             <p>
               <strong>Patient:</strong> {selectedAppointment.patientName}
             </p>
@@ -147,25 +179,95 @@ export default function DoctorPage() {
             <p>
               <strong>Status:</strong> {selectedAppointment.status}
             </p>
+            <p>
+              <strong>Date:</strong> {selectedAppointment.date}
+            </p>
           </div>
 
-          <button
-            onClick={handleMarkComplete}
-            className="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
-          >
-            ✅ Mark as Complete
-          </button>
+          {/* Status Actions */}
+          <div className="flex flex-wrap gap-3 mb-6">
+            <button
+              onClick={() =>
+                setSelectedAppointment((prev) =>
+                  prev ? { ...prev, status: "Completed" } : null
+                )
+              }
+              className="bg-green-500 bg-opacity-30 hover:bg-opacity-100 text-green-800 px-4 py-2 rounded flex items-center gap-2"
+            >
+              ✅ Complete
+            </button>
 
-          {/* Medical Record Form */}
-          <div className="mt-8">
+            <button
+              onClick={() => setShowReschedulePicker((prev) => !prev)}
+              className="bg-yellow-400 bg-opacity-30 hover:bg-opacity-100 text-yellow-900 px-4 py-2 rounded flex items-center gap-2"
+            >
+              📅 Reschedule
+            </button>
+
+            <button
+              onClick={() =>
+                setSelectedAppointment((prev) =>
+                  prev ? { ...prev, status: "Confirmed" } : null
+                )
+              }
+              className="bg-blue-500 bg-opacity-30 hover:bg-opacity-100 text-blue-900 px-4 py-2 rounded flex items-center gap-2"
+            >
+              ✔️ Confirm
+            </button>
+
+            <button
+              onClick={() =>
+                setSelectedAppointment((prev) =>
+                  prev ? { ...prev, status: "Cancelled" } : null
+                )
+              }
+              className="bg-red-500 bg-opacity-30 hover:bg-opacity-100 text-red-900 px-4 py-2 rounded flex items-center gap-2"
+            >
+              ❌ Cancel
+            </button>
+          </div>
+
+          {/* Reschedule Picker */}
+          {showReschedulePicker && (
+            <div className="mb-4">
+              <DatePicker
+                selected={rescheduleDate}
+                onChange={(date) => {
+                  setRescheduleDate(date);
+                  if (date) {
+                    const newDate = format(date, "yyyy/MM/dd");
+                    setSelectedAppointment((prev) =>
+                      prev
+                        ? { ...prev, date: newDate, status: "Rescheduled" }
+                        : null
+                    );
+                    setShowReschedulePicker(false);
+                  }
+                }}
+                dateFormat="yyyy/MM/dd"
+                placeholderText="Pick a new date"
+                className="border border-yellow-400 p-2 rounded"
+              />
+            </div>
+          )}
+
+          {/* Medical Record */}
+          <div>
             <h3 className="text-xl font-semibold mb-4">Add Medical Record</h3>
             <div className="grid gap-3 md:grid-cols-2">
-              <input
-                type="date"
-                name="date"
-                value={medicalRecord.date}
-                onChange={handleRecordChange}
-                className="border p-2 rounded"
+              <DatePicker
+                selected={
+                  medicalRecord.date
+                    ? parse(medicalRecord.date, "yyyy/MM/dd", new Date())
+                    : null
+                }
+                onChange={(date: Date | null) => {
+                  const formatted = date ? format(date, "yyyy/MM/dd") : "";
+                  setMedicalRecord((prev) => ({ ...prev, date: formatted }));
+                }}
+                dateFormat="yyyy/MM/dd"
+                placeholderText="YYYY/MM/DD"
+                className="border border-gray-400 p-2 rounded w-full"
               />
               <input
                 type="text"
@@ -173,7 +275,7 @@ export default function DoctorPage() {
                 placeholder="Diagnosis"
                 value={medicalRecord.diagnosis}
                 onChange={handleRecordChange}
-                className="border p-2 rounded"
+                className="border border-gray-400 p-2 rounded"
               />
               <input
                 type="text"
@@ -181,53 +283,113 @@ export default function DoctorPage() {
                 placeholder="Treatment"
                 value={medicalRecord.treatment}
                 onChange={handleRecordChange}
-                className="border p-2 rounded"
-              />
-              <input
-                type="text"
-                name="medication"
-                placeholder="Medication"
-                value={medicalRecord.prescription.medication}
-                onChange={handleRecordChange}
-                className="border p-2 rounded"
-              />
-              <input
-                type="text"
-                name="dosage"
-                placeholder="Dosage"
-                value={medicalRecord.prescription.dosage}
-                onChange={handleRecordChange}
-                className="border p-2 rounded"
-              />
-              <input
-                type="text"
-                name="duration"
-                placeholder="Duration"
-                value={medicalRecord.prescription.duration}
-                onChange={handleRecordChange}
-                className="border p-2 rounded"
-              />
-              <input
-                type="text"
-                name="instructions"
-                placeholder="Instructions"
-                value={medicalRecord.prescription.instructions}
-                onChange={handleRecordChange}
-                className="border p-2 rounded"
+                className="border border-gray-400 p-2 rounded"
               />
               <textarea
                 name="notes"
                 placeholder="Notes"
                 value={medicalRecord.notes}
                 onChange={handleRecordChange}
-                className="border p-2 rounded col-span-full"
+                className="border border-gray-400 p-2 rounded col-span-full"
               />
             </div>
+
+            {/* Prescription Section */}
+            <div className="mt-6">
+              <h4 className="text-lg font-medium mb-2">Prescriptions</h4>
+
+              {prescriptions.length > 0 && (
+                <div className="mb-4 flex flex-wrap gap-4">
+                  {prescriptions.map((p, index) => (
+                    <div
+                      key={index}
+                      className="relative p-4 rounded bg-pink-100 border border-pink-300 text-sm w-64"
+                    >
+                      <button
+                        onClick={() =>
+                          setPrescriptions((prev) =>
+                            prev.filter((_, i) => i !== index)
+                          )
+                        }
+                        className="absolute top-1 right-2 text-black text-xl font-bold leading-none hover:text-red-600"
+                        aria-label="Remove Prescription"
+                      >
+                        ✕
+                      </button>
+                      <div className="font-semibold">{p.medication}</div>
+                      <div>
+                        {p.dosage} — {p.duration}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {showPrescriptionForm ? (
+                <div className="grid gap-3 md:grid-cols-2">
+                  <input
+                    type="text"
+                    name="medication"
+                    placeholder="Medication"
+                    value={prescriptionInput.medication}
+                    onChange={handlePrescriptionInputChange}
+                    className="border border-gray-400 p-2 rounded"
+                  />
+                  <input
+                    type="text"
+                    name="dosage"
+                    placeholder="Dosage"
+                    value={prescriptionInput.dosage}
+                    onChange={handlePrescriptionInputChange}
+                    className="border border-gray-400 p-2 rounded"
+                  />
+                  <input
+                    type="text"
+                    name="duration"
+                    placeholder="Duration"
+                    value={prescriptionInput.duration}
+                    onChange={handlePrescriptionInputChange}
+                    className="border border-gray-400 p-2 rounded"
+                  />
+                  <input
+                    type="text"
+                    name="instructions"
+                    placeholder="Instructions"
+                    value={prescriptionInput.instructions}
+                    onChange={handlePrescriptionInputChange}
+                    className="border border-gray-400 p-2 rounded"
+                  />
+
+                  <button
+                    onClick={handleAddPrescription}
+                    className="mt-2 md:col-span-2 bg-[rgb(59,130,246)] text-white px-4 py-2 rounded bg-opacity-60 hover:bg-opacity-100"
+                  >
+                    ➕ Add Prescription
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowPrescriptionForm(true)}
+                  className="bg-[rgb(59,130,246)] text-white px-4 py-2 rounded bg-opacity-60 hover:bg-opacity-100"
+                >
+                  ➕ Add Prescription
+                </button>
+              )}
+            </div>
+
             <button
-              onClick={() =>
-                alert("Record Saved (not yet connected to backend)")
-              }
-              className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+              onClick={() => {
+                alert("Medical Record Saved");
+                setMedicalRecord({
+                  date: "",
+                  diagnosis: "",
+                  treatment: "",
+                  notes: "",
+                });
+                setPrescriptions([]);
+                setShowPrescriptionForm(false);
+              }}
+              className="mt-6 bg-[rgb(59,130,246)] text-white px-4 py-2 rounded bg-opacity-60 hover:bg-opacity-100"
             >
               💾 Save Record
             </button>
