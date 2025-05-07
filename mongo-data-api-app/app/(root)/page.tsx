@@ -3,17 +3,16 @@ import mongo from "../src/mongoIndex";
 
 export default async function Home() {
   const isConnected = await mongo.testDatabaseConnection();
-  const patients = await mongo.getPatientsOrStatement({
-    first_name: "Felicia",
-  });
-  // const patients = await mongo.getPatientById("100");
-  // const patients = await mongo.retreieveAllPatients();
-
-  console.log(patients);
+  const patients = await mongo.retreieveAllPatients();
+  const doctors = await mongo.listAllDocters();
 
   return (
-    <>
-      <ClientComponent isConnected={isConnected} patients={patients} />
-    </>
+    <div className="w-full h-full">
+      <ClientComponent
+        isConnected={isConnected}
+        patients={patients}
+        doctors={doctors}
+      />
+    </div>
   );
 }
