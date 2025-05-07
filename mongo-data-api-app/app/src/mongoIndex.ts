@@ -10,6 +10,8 @@ import {
   listAllDocters,
   listAvailableDoctors,
   listAvailableDoctorsBySpeciality,
+  createMedicalRecord,
+  updateMedicalRecord
 } from "./mongoActions";
 
 const mongoActions = {
@@ -25,6 +27,9 @@ const mongoActions = {
   listAllDocters,
   listAvailableDoctors,
   listAvailableDoctorsBySpeciality,
+
+  createMedicalRecord,
+  updateMedicalRecord
 };
 
 export default mongoActions;

@@ -1,11 +1,12 @@
 "use server";
 
 import client from "@/lib/mongodb";
-import { deleteOne, findDocuments, insertOne } from "./mongoHelpers";
+import { deleteOne, findDocuments, insertOne, updateOne } from "./mongoHelpers";
 import { patientOrFilter } from "./queries/patient";
 import { IDFilter } from "./queries/shared";
 import { PatientQueryConditions } from "./types/patientQueries";
 import { MedicalStaffCreate, MedicalStaffSpecialisationSearch, MedicalStaffAvailabilitySearch, MedicalStaffAvailabilitySearchWithSpecialisation } from "./types/medicalStaffQueries";
+import { MedicalRecordCreate, MedicalRecordUpdate } from "./types/medicalRecordQueries";
 
 export async function testDatabaseConnection() {
   let isConnected = false;
@@ -79,9 +80,50 @@ export async function listAvailableDoctors(Data: MedicalStaffAvailabilitySearch)
 export async function listAvailableDoctorsBySpeciality(Data: MedicalStaffAvailabilitySearchWithSpecialisation) {
   const data = await findDocuments("medical_staff", {
     role: Data.role,
-    specialisation: { $regex: new RegExp(Data.specialisation, "i") },
+    specialisation: { $regex: "/" + Data.specialisation + "/i" },
     availability_start_time: { $lte: Data.availability_start_time },
     availability_end_time: { $gte: Data.availability_end_time }
   });
+  return data;
+}
+
+/* Medical Records Queries */
+
+export async function createMedicalRecord(Data: MedicalRecordCreate) {
+  const data = await updateOne(
+    "patient",
+    IDFilter(Data.patient_id),
+    {
+      $push: {
+        medical_records: {
+          doctor_id: Data.doctor_id,
+          record_date: Data.record_date,
+          diagnosis: Data.diagnosis,
+          treatment: Data.treatment,
+          prescriptions: [],
+          notes: Data.notes
+        }
+      }
+    }
+  );
+  return data;
+}
+
+export async function updateMedicalRecord(Data: MedicalRecordUpdate) {
+  const data = await updateOne(
+    "patient",
+    {
+      _id: Data.patient_id,
+      "medical_records.record_date": Data.record_date,
+      "medical_records.diagnosis": Data.diagnosis
+    },
+    {
+      $set: {
+        "medical_records.$.diagnosis": Data.diagnosis,
+        "medical_records.$.treatment": Data.treatment,
+        "medical_records.$.notes": Data.notes
+      }
+    }
+  );
   return data;
 }
