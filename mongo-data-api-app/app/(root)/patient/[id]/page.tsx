@@ -8,6 +8,7 @@ interface Props {
 
 export default async function Page({ params }: Props) {
   const patient = await mongo.getPatientById((await params).id);
+  const doctors = await mongo.listAllDoctersWithAllData();
 
   if (!patient) {
     return (
@@ -29,7 +30,7 @@ export default async function Page({ params }: Props) {
       {/* Main content */}
       <div className="max-w-3xl mx-auto mt-32">
         <Suspense fallback={<div>Loading...</div>}>
-          <PatientDetailClient patient={patient} />
+          <PatientDetailClient patient={patient} doctors={doctors} />
         </Suspense>
       </div>
     </div>

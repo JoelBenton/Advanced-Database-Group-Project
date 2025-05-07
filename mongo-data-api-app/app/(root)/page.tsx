@@ -1,5 +1,6 @@
 import ClientComponent from "../src/component/indexClientComponent";
 import mongo from "../src/mongoIndex";
+import { retrieveOpenSlotsForDoctorOnDate } from "../src/utils";
 
 export default async function Home() {
   const isConnected = await mongo.testDatabaseConnection();

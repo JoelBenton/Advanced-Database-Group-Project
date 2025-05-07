@@ -5,7 +5,7 @@ import { aggregateDocuments, deleteOne, findDocuments, insertOne, updateOne } fr
 import { patientOrFilter } from "./queries/patient";
 import { IDFilter } from "./queries/shared";
 import { PatientData, PatientQueryConditions } from "./types/patientQueries";
-import { MedicalStaffCreate, MedicalStaffSpecialisationSearch, MedicalStaffAvailabilitySearch, MedicalStaffAvailabilitySearchWithSpecialisation } from "./types/medicalStaffQueries";
+import { MedicalStaffCreate, MedicalStaffSpecialisationSearch, MedicalStaffAvailabilitySearch, MedicalStaffAvailabilitySearchWithSpecialisation, MedicalStaff } from "./types/medicalStaffQueries";
 import { MedicalRecordCreate, MedicalRecordUpdate } from "./types/medicalRecordQueries";
 import path from "path";
 
@@ -69,12 +69,21 @@ export async function listDoctersBySpeciality(Data: MedicalStaffSpecialisationSe
 }
 
 export async function listAllDocters() {
-  const data = await findDocuments("medical_staff", { role: "Doctor" }, { first_name: 1, second_name: 1, specialisation: 1, _id: 0 });
+  const data = await findDocuments("medical_staff", { role: "Doctor" }, { first_name: 1, second_name: 1, specialisation: 1, _id: 1 });
   return data;
 }
 
+export async function listAllDoctersWithAllData() {
+  const data = await findDocuments("medical_staff", { role: "Doctor" });
+  return data as unknown as MedicalStaff[];
+}
+
 export async function listAvailableDoctors(Data: MedicalStaffAvailabilitySearch) {
-  const data = await findDocuments("medical_staff", Data);
+  const data = await findDocuments("medical_staff", {
+    role: Data.role,
+    availability_start_time: { $lte: Data.availability_start_time },
+    availability_end_time: { $gte: Data.availability_end_time }
+  });
   return data;
 }
 
@@ -88,6 +97,11 @@ export async function listAvailableDoctorsBySpeciality(Data: MedicalStaffAvailab
   return data;
 }
 
+export async function getDoctorAvailityById(id: string) {
+  const data = await findDocuments("medical_staff", IDFilter(id), { _id: 0, availability_start_time: 1, availability_end_time: 1 });
+  return data as unknown as { availability_start_time: string, availability_end_time: string };
+}
+
 /* Appointmnet Queries */
 
 export async function retrieveAppointmentsForDoctorOnDateRange(
@@ -95,6 +109,7 @@ export async function retrieveAppointmentsForDoctorOnDateRange(
   start_date: string,
   end_date: string
 ) { 
+  console.log(start_date, end_date);
   const data = await aggregateDocuments("patient", [
     {
       $unwind: {
@@ -122,6 +137,37 @@ export async function retrieveAppointmentsForDoctorOnDateRange(
   ]);
   
   return data;
+}
+
+export async function retrieveAppointmentSlotsForDoctorOnDateRange(
+  doctor_id: string,
+  start_date: string,
+  end_date: string
+) { 
+  const data = await aggregateDocuments("patient", [
+    {
+      $unwind: {
+        path: "$appointments",
+      }
+    },
+    {
+      $match: {
+        "appointments.doctor_id": Number(doctor_id),
+        "appointments.date": {
+          $gte: start_date,
+          $lte: end_date
+        }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        time_slot: "$appointments.time_slot",
+      }
+    }
+  ]);
+  
+  return data as unknown as [{ time_slot: string }];
 }
 
 /* Medical Records Queries */
