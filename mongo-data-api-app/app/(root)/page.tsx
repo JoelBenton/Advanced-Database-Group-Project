@@ -1,4 +1,4 @@
-import ClientComponent from "../src/component/isConnect";
+import ClientComponent from "../src/component/indexClientComponent";
 import mongo from "../src/mongoIndex";
 
 export default async function Home() {

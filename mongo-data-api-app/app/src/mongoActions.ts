@@ -4,7 +4,7 @@ import client from "@/lib/mongodb";
 import { deleteOne, findDocuments, insertOne, updateOne } from "./mongoHelpers";
 import { patientOrFilter } from "./queries/patient";
 import { IDFilter } from "./queries/shared";
-import { PatientQueryConditions } from "./types/patientQueries";
+import { PatientData, PatientQueryConditions } from "./types/patientQueries";
 import { MedicalStaffCreate, MedicalStaffSpecialisationSearch, MedicalStaffAvailabilitySearch, MedicalStaffAvailabilitySearchWithSpecialisation } from "./types/medicalStaffQueries";
 import { MedicalRecordCreate, MedicalRecordUpdate } from "./types/medicalRecordQueries";
 
@@ -35,7 +35,7 @@ export async function getPatientsOrStatement(Conditions: PatientQueryConditions 
 
 export async function getPatientById(id: string) {
   const data = await findDocuments("patient", IDFilter(id));
-  return data;
+  return data[0] as unknown as PatientData;
 }
 
 export async function retreieveAllPatients() {

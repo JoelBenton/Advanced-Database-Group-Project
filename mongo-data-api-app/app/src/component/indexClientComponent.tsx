@@ -82,11 +82,21 @@ export default function ClientComponent({
               onChange={(e) => setSelectedId(e.target.value)}
             >
               <option value="">{`Select a ${role}`}</option>
-              {list.map((person: any) => (
-                <option key={person._id} value={person._id}>
-                  {person.first_name} {person.last_name ?? ""}
-                </option>
-              ))}
+              {[...list]
+                .sort((a, b) => {
+                  const nameA = `${a.first_name} ${
+                    a.last_name ?? ""
+                  }`.toLowerCase();
+                  const nameB = `${b.first_name} ${
+                    b.last_name ?? ""
+                  }`.toLowerCase();
+                  return nameA.localeCompare(nameB);
+                })
+                .map((person: any) => (
+                  <option key={person._id} value={person._id}>
+                    {person.first_name} {person.last_name ?? ""}
+                  </option>
+                ))}
             </select>
 
             <button
