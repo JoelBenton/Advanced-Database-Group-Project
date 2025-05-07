@@ -18,7 +18,7 @@ export async function findDocuments(collection: string, query = {}, options = {}
   return result;
 }
 
-export async function aggregateDocuments(collection: string, pipeline = []) {
+export async function aggregateDocuments(collection: string, pipeline: object[]) {
   const col = await getCollection(collection);
   const result = await col.aggregate(pipeline).toArray();
   return result;

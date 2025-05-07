@@ -7,7 +7,7 @@ interface Props {
 }
 
 export default async function Page({ params }: Props) {
-  const patient = await mongo.getPatientById(params.id);
+  const patient = await mongo.getPatientById((await params).id);
 
   if (!patient) {
     return (

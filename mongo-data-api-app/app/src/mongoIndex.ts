@@ -11,7 +11,8 @@ import {
   listAvailableDoctors,
   listAvailableDoctorsBySpeciality,
   createMedicalRecord,
-  updateMedicalRecord
+  updateMedicalRecord,
+  retrieveAppointmentsForDoctorOnDateRange,
 } from "./mongoActions";
 
 const mongoActions = {
@@ -29,7 +30,9 @@ const mongoActions = {
   listAvailableDoctorsBySpeciality,
 
   createMedicalRecord,
-  updateMedicalRecord
+  updateMedicalRecord,
+
+  retrieveAppointmentsForDoctorOnDateRange,
 };
 
 export default mongoActions;

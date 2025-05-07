@@ -1,12 +1,13 @@
 "use server";
 
 import client from "@/lib/mongodb";
-import { deleteOne, findDocuments, insertOne, updateOne } from "./mongoHelpers";
+import { aggregateDocuments, deleteOne, findDocuments, insertOne, updateOne } from "./mongoHelpers";
 import { patientOrFilter } from "./queries/patient";
 import { IDFilter } from "./queries/shared";
 import { PatientData, PatientQueryConditions } from "./types/patientQueries";
 import { MedicalStaffCreate, MedicalStaffSpecialisationSearch, MedicalStaffAvailabilitySearch, MedicalStaffAvailabilitySearchWithSpecialisation } from "./types/medicalStaffQueries";
 import { MedicalRecordCreate, MedicalRecordUpdate } from "./types/medicalRecordQueries";
+import path from "path";
 
 export async function testDatabaseConnection() {
   let isConnected = false;
@@ -84,6 +85,42 @@ export async function listAvailableDoctorsBySpeciality(Data: MedicalStaffAvailab
     availability_start_time: { $lte: Data.availability_start_time },
     availability_end_time: { $gte: Data.availability_end_time }
   });
+  return data;
+}
+
+/* Appointmnet Queries */
+
+export async function retrieveAppointmentsForDoctorOnDateRange(
+  doctor_id: number,
+  start_date: string,
+  end_date: string
+) { 
+  const data = await aggregateDocuments("patient", [
+    {
+      $unwind: {
+        path: "$appointments",
+      }
+    },
+    {
+      $match: {
+        "appointments.doctor_id": doctor_id,
+        "appointments.date": {
+          $gte: start_date,
+          $lte: end_date
+        }
+      }
+    },
+    {
+      $project: {
+        _id: "$_id",
+        first_name: "$first_name",
+        last_name: "$last_name",
+        appointment: "$appointments",
+        medical_record: "$medical_records" 
+      }
+    }
+  ]);
+  
   return data;
 }
 
