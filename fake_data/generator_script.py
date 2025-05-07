@@ -166,7 +166,7 @@ def generate_patients(num_records, user_ids):
                 "urgency": random.choice(['Low', 'Medium', 'High']),
                 "reason_for": reason,
                 "doctor_id": random.randint(1, num_medical_staff),
-                "status": random.choice(['Confirmed', 'Pending', 'Cancelled']),
+                "status": random.choice(['Confirmed', 'Pending', 'Cancelled', 'Rescheduled']),
             })
         
         patients.append(patient)

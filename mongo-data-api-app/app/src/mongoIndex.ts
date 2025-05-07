@@ -8,11 +8,15 @@ import {
   getMedicalStaffById,
   listDoctersBySpeciality,
   listAllDocters,
+  listAllDoctersWithAllData,
   listAvailableDoctors,
   listAvailableDoctorsBySpeciality,
   createMedicalRecord,
   updateMedicalRecord,
   retrieveAppointmentsForDoctorOnDateRange,
+  getDoctorAvailityById,
+  retrieveAppointmentSlotsForDoctorOnDateRange,
+
 } from "./mongoActions";
 
 const mongoActions = {
@@ -26,6 +30,7 @@ const mongoActions = {
   getMedicalStaffById,
   listDoctersBySpeciality,
   listAllDocters,
+  listAllDoctersWithAllData,
   listAvailableDoctors,
   listAvailableDoctorsBySpeciality,
 
@@ -33,6 +38,8 @@ const mongoActions = {
   updateMedicalRecord,
 
   retrieveAppointmentsForDoctorOnDateRange,
+  getDoctorAvailityById,
+  retrieveAppointmentSlotsForDoctorOnDateRange,
 };
 
 export default mongoActions;
