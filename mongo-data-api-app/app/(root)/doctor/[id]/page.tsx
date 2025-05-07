@@ -303,23 +303,38 @@ export default function DoctorPage() {
                   {prescriptions.map((p, index) => (
                     <div
                       key={index}
-                      className="relative p-4 rounded bg-pink-100 border border-pink-300 text-sm w-64"
+                      className="relative p-4 rounded bg-green-100 border border-green-300 text-sm w-64 flex items-center justify-between"
                     >
+                      <div>
+                        <div className="font-semibold">{p.medication}</div>
+                        <div>
+                          {p.dosage} — {p.duration}
+                        </div>
+                      </div>
                       <button
                         onClick={() =>
                           setPrescriptions((prev) =>
                             prev.filter((_, i) => i !== index)
                           )
                         }
-                        className="absolute top-1 right-2 text-black text-xl font-bold leading-none hover:text-red-600"
+                        className="ml-2 text-black hover:text-red-600 transition-colors"
                         aria-label="Remove Prescription"
                       >
-                        ✕
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3m-4 0h14"
+                          />
+                        </svg>
                       </button>
-                      <div className="font-semibold">{p.medication}</div>
-                      <div>
-                        {p.dosage} — {p.duration}
-                      </div>
                     </div>
                   ))}
                 </div>
@@ -391,7 +406,7 @@ export default function DoctorPage() {
               }}
               className="mt-6 bg-[rgb(59,130,246)] text-white px-4 py-2 rounded bg-opacity-60 hover:bg-opacity-100"
             >
-              💾 Save Record
+              📀 Save Record
             </button>
           </div>
         </div>
