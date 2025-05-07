@@ -603,7 +603,12 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
                             Reason
                           </label>
                           <select
-                            onChange={(e) => setSelectedReason(e.target.value)}
+                            onChange={(e) =>
+                              setSelectedReason(
+                                e.target
+                                  .value as keyof typeof appointment_equipment
+                              )
+                            }
                             value={selectedReason ?? ""}
                             className="input p-3 text-lg border rounded-md shadow-md w-full"
                           >
