@@ -1,42 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format, parse } from "date-fns";
+import { MedicalStaff } from "../types/medicalStaffQueries";
+import mango from "../mongoIndex"
+import { DoctorAppointments } from "../types/doctorTypes";
 
-const mockAppointments = [
-  {
-    id: 1,
-    date: "2025-05-08",
-    time: "10:00",
-    patientName: "John Doe",
-    reason: "Headache",
-    room: "101",
-    urgency: "High",
-    status: "Pending",
-  },
-  {
-    id: 2,
-    date: "2025-05-08",
-    time: "12:00",
-    patientName: "Alice Smith",
-    reason: "Fever",
-    room: "102",
-    urgency: "Medium",
-    status: "Pending",
-  },
-];
-
-export default function DoctorClientComponent({ id }: { id: string }) {
-  console.log(id);
-  const [doctorName] = useState("Dr. Jane Watson");
+export default function DoctorClientComponent({
+  id,
+  doctor,
+}: {
+  id: string;
+  doctor: MedicalStaff;
+}) {
+  const [doctorName] = useState(doctor.first_name + " " + doctor.second_name);
   const [showDoctorMenu, setShowDoctorMenu] = useState(false);
+
+  const [isLoadingAppointments, startLoadingAppointments] = useTransition();
+
+  const [appointments, setAppointments] = useState<DoctorAppointments[]>([]);
 
   const [selectedDate, setSelectedDate] = useState(
     format(new Date(), "yyyy/MM/dd")
   );
-  const [selectedAppointment, setSelectedAppointment] = useState<any | null>(
+  const [selectedAppointment, setSelectedAppointment] = useState<DoctorAppointments | null>(
     null
   );
   const [showReschedulePicker, setShowReschedulePicker] = useState(false);
@@ -57,10 +46,6 @@ export default function DoctorClientComponent({ id }: { id: string }) {
     instructions: "",
   });
   const [prescriptions, setPrescriptions] = useState<any[]>([]);
-
-  const appointments = mockAppointments.filter(
-    (a) => a.date === selectedDate.replaceAll("/", "-")
-  );
 
   const handleRecordChange = (e: any) => {
     const { name, value } = e.target;
@@ -84,6 +69,24 @@ export default function DoctorClientComponent({ id }: { id: string }) {
       setShowPrescriptionForm(false);
     }
   };
+
+  function changeSelectedDate(date: string) {
+    setSelectedDate(date);
+    const formatted = date ? format(new Date(date), "yyyy/MM/dd") : "";
+    setSelectedAppointment(null);
+    setSelectedDate(formatted);
+
+    startLoadingAppointments(async () => {
+        console.log("Loading appointments for date: " + formatted);
+      const allAppointments = await mango.retrieveAppointmentsForDoctorOnDateRange(
+        doctor._id,
+        formatted.replaceAll("/", "-"),
+        formatted.replaceAll("/", "-")
+      )
+
+      setAppointments(allAppointments);
+    });
+  }
 
   return (
     <div className="bg-gradient-to-br from-green-100 to-blue-100 min-h-screen p-6 relative">
@@ -122,7 +125,7 @@ export default function DoctorClientComponent({ id }: { id: string }) {
             onChange={(date: Date | null) => {
               const formatted = date ? format(date, "yyyy/MM/dd") : "";
               setSelectedAppointment(null);
-              setSelectedDate(formatted);
+              changeSelectedDate(formatted);
             }}
             dateFormat="yyyy/MM/dd"
             placeholderText="YYYY/MM/DD"
@@ -136,23 +139,23 @@ export default function DoctorClientComponent({ id }: { id: string }) {
           ) : (
             appointments.map((app) => (
               <div
-                key={app.id}
+                key={app._id}
                 className={`p-4 rounded-lg border-2 shadow-sm cursor-pointer transition ${
-                  selectedAppointment?.id === app.id
+                  selectedAppointment?._id === app._id
                     ? "bg-[rgb(59,130,246)] bg-opacity-20 border-[rgb(59,130,246)]"
                     : "bg-white border-gray-300 hover:bg-[rgb(59,130,246)] hover:bg-opacity-20 hover:border-[rgb(59,130,246)]"
                 }`}
                 onClick={() => setSelectedAppointment(app)}
               >
                 <h2 className="font-semibold text-lg">
-                  {app.time} - {app.patientName}
+                  {app.appointment.time_slot.split('-')[0].trimStart()} - {app.first_name} {app.last_name}
                 </h2>
-                <p className="text-sm text-gray-600">{app.reason}</p>
+                <p className="text-sm text-gray-600">{app.appointment.reason_for}</p>
                 <p className="text-sm text-gray-500">
-                  Room: {app.room} | Urgency: {app.urgency}
+                  Room: {app.appointment.room.name} | Urgency: {app.appointment.urgency}
                 </p>
                 <span className="text-sm font-medium text-gray-700">
-                  Status: {app.status}
+                  Status: {app.appointment.status}
                 </span>
               </div>
             ))
@@ -166,22 +169,23 @@ export default function DoctorClientComponent({ id }: { id: string }) {
           <h2 className="text-2xl font-semibold mb-4">Appointment Details</h2>
           <div className="grid gap-2 text-sm mb-4">
             <p>
-              <strong>Patient:</strong> {selectedAppointment.patientName}
+              <strong>Patient:</strong> {selectedAppointment.first_name}{" "}
+              {selectedAppointment.last_name}
             </p>
             <p>
-              <strong>Reason:</strong> {selectedAppointment.reason}
+              <strong>Reason:</strong> {selectedAppointment.appointment.reason_for}
             </p>
             <p>
-              <strong>Room:</strong> {selectedAppointment.room}
+              <strong>Room:</strong> {selectedAppointment.appointment.room.name}
             </p>
             <p>
-              <strong>Urgency:</strong> {selectedAppointment.urgency}
+              <strong>Urgency:</strong> {selectedAppointment.appointment.urgency}
             </p>
             <p>
-              <strong>Status:</strong> {selectedAppointment.status}
+              <strong>Status:</strong> {selectedAppointment.appointment.status}
             </p>
             <p>
-              <strong>Date:</strong> {selectedAppointment.date}
+              <strong>Date:</strong> {selectedAppointment.appointment.date}
             </p>
           </div>
 
