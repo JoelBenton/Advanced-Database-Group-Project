@@ -1,12 +1,27 @@
 "use server";
 
 import client from "@/lib/mongodb";
-import { aggregateDocuments, deleteOne, findDocuments, insertOne, updateOne } from "./mongoHelpers";
+import {
+  aggregateDocuments,
+  deleteOne,
+  findDocuments,
+  insertOne,
+  updateOne,
+} from "./mongoHelpers";
 import { patientOrFilter } from "./queries/patient";
 import { IDFilter } from "./queries/shared";
 import { PatientData, PatientQueryConditions } from "./types/patientQueries";
-import { MedicalStaffCreate, MedicalStaffSpecialisationSearch, MedicalStaffAvailabilitySearch, MedicalStaffAvailabilitySearchWithSpecialisation, MedicalStaff } from "./types/medicalStaffQueries";
-import { MedicalRecordCreate, MedicalRecordUpdate } from "./types/medicalRecordQueries";
+import {
+  MedicalStaffCreate,
+  MedicalStaffSpecialisationSearch,
+  MedicalStaffAvailabilitySearch,
+  MedicalStaffAvailabilitySearchWithSpecialisation,
+  MedicalStaff
+} from "./types/medicalStaffQueries";
+import {
+  MedicalRecordCreate,
+  MedicalRecordUpdate,
+} from "./types/medicalRecordQueries";
 import path from "path";
 
 export async function testDatabaseConnection() {
@@ -16,7 +31,7 @@ export async function testDatabaseConnection() {
     // Send a ping to confirm a successful connection
     await mongoClient.db("admin").command({ ping: 1 });
     console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!",
+      "Pinged your deployment. You successfully connected to MongoDB!"
     ); // because this is a server action, the console.log will be outputted to your terminal not in the browser
     return !isConnected;
   } catch (e) {
@@ -29,7 +44,9 @@ export async function testDatabaseConnection() {
   The following functions are used to query the database for patients.
 */
 
-export async function getPatientsOrStatement(Conditions: PatientQueryConditions = {}) {
+export async function getPatientsOrStatement(
+  Conditions: PatientQueryConditions = {}
+) {
   const data = await findDocuments("patient", patientOrFilter(Conditions));
   return data;
 }
@@ -63,20 +80,26 @@ export async function getMedicalStaffById(id: string) {
   return data;
 }
 
-export async function listDoctersBySpeciality(Data: MedicalStaffSpecialisationSearch) {
+export async function listDoctersBySpeciality(
+  Data: MedicalStaffSpecialisationSearch
+) {
   const data = await findDocuments("medical_staff", { Data });
   return data;
 }
 
 export async function listAllDocters() {
-  const data = await findDocuments("medical_staff", { role: "Doctor" }, { first_name: 1, second_name: 1, specialisation: 1, _id: 1 });
+  const data = await findDocuments(
+    "medical_staff",
+    { role: "Doctor" },
+    { first_name: 1, second_name: 1, specialisation: 1, _id: 0 }
+  );
   return data;
 }
 
-export async function listAllDoctersWithAllData() {
-  const data = await findDocuments("medical_staff", { role: "Doctor" });
-  return data as unknown as MedicalStaff[];
-}
+export async function listAvailableDoctors(
+  Data: MedicalStaffAvailabilitySearch
+) {
+  const data = await findDocuments("medical_staff", Data)
 
 export async function listAvailableDoctors(Data: MedicalStaffAvailabilitySearch) {
   const data = await findDocuments("medical_staff", {
@@ -87,12 +110,14 @@ export async function listAvailableDoctors(Data: MedicalStaffAvailabilitySearch)
   return data;
 }
 
-export async function listAvailableDoctorsBySpeciality(Data: MedicalStaffAvailabilitySearchWithSpecialisation) {
+export async function listAvailableDoctorsBySpeciality(
+  Data: MedicalStaffAvailabilitySearchWithSpecialisation
+) {
   const data = await findDocuments("medical_staff", {
     role: Data.role,
     specialisation: { $regex: "/" + Data.specialisation + "/i" },
     availability_start_time: { $lte: Data.availability_start_time },
-    availability_end_time: { $gte: Data.availability_end_time }
+    availability_end_time: { $gte: Data.availability_end_time },
   });
   return data;
 }
@@ -105,25 +130,24 @@ export async function getDoctorAvailityById(id: string) {
 /* Appointmnet Queries */
 
 export async function retrieveAppointmentsForDoctorOnDateRange(
-  doctor_id: number,
+  doctor_id: string,
   start_date: string,
   end_date: string
-) { 
-  console.log(start_date, end_date);
+) {
   const data = await aggregateDocuments("patient", [
     {
       $unwind: {
         path: "$appointments",
-      }
+      },
     },
     {
       $match: {
         "appointments.doctor_id": doctor_id,
         "appointments.date": {
           $gte: start_date,
-          $lte: end_date
-        }
-      }
+          $lte: end_date,
+        },
+      },
     },
     {
       $project: {
@@ -131,11 +155,11 @@ export async function retrieveAppointmentsForDoctorOnDateRange(
         first_name: "$first_name",
         last_name: "$last_name",
         appointment: "$appointments",
-        medical_record: "$medical_records" 
-      }
-    }
+        medical_record: "$medical_records",
+      },
+    },
   ]);
-  
+
   return data;
 }
 
@@ -173,22 +197,18 @@ export async function retrieveAppointmentSlotsForDoctorOnDateRange(
 /* Medical Records Queries */
 
 export async function createMedicalRecord(Data: MedicalRecordCreate) {
-  const data = await updateOne(
-    "patient",
-    IDFilter(Data.patient_id),
-    {
-      $push: {
-        medical_records: {
-          doctor_id: Data.doctor_id,
-          record_date: Data.record_date,
-          diagnosis: Data.diagnosis,
-          treatment: Data.treatment,
-          prescriptions: [],
-          notes: Data.notes
-        }
-      }
-    }
-  );
+  const data = await updateOne("patient", IDFilter(Data.patient_id), {
+    $push: {
+      medical_records: {
+        doctor_id: Data.doctor_id,
+        record_date: Data.record_date,
+        diagnosis: Data.diagnosis,
+        treatment: Data.treatment,
+        prescriptions: [],
+        notes: Data.notes,
+      },
+    },
+  });
   return data;
 }
 
@@ -198,14 +218,14 @@ export async function updateMedicalRecord(Data: MedicalRecordUpdate) {
     {
       _id: Data.patient_id,
       "medical_records.record_date": Data.record_date,
-      "medical_records.diagnosis": Data.diagnosis
+      "medical_records.diagnosis": Data.diagnosis,
     },
     {
       $set: {
         "medical_records.$.diagnosis": Data.diagnosis,
         "medical_records.$.treatment": Data.treatment,
-        "medical_records.$.notes": Data.notes
-      }
+        "medical_records.$.notes": Data.notes,
+      },
     }
   );
   return data;
