@@ -5,8 +5,10 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format, parse } from "date-fns";
 import { MedicalStaff } from "../types/medicalStaffQueries";
-import mango from "../mongoIndex"
+import mango from "../mongoIndex";
 import { DoctorAppointments } from "../types/doctorTypes";
+import toast from "react-hot-toast";
+import { updateAppointment } from "../types/AppointmentTypes";
 
 export default function DoctorClientComponent({
   id,
@@ -19,15 +21,16 @@ export default function DoctorClientComponent({
   const [showDoctorMenu, setShowDoctorMenu] = useState(false);
 
   const [isLoadingAppointments, startLoadingAppointments] = useTransition();
+  const [isUpdatingAppointmentStatusLoading, startUpdatingAppointmentStatus] =
+    useTransition();
 
   const [appointments, setAppointments] = useState<DoctorAppointments[]>([]);
 
   const [selectedDate, setSelectedDate] = useState(
     format(new Date(), "yyyy/MM/dd")
   );
-  const [selectedAppointment, setSelectedAppointment] = useState<DoctorAppointments | null>(
-    null
-  );
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<DoctorAppointments | null>(null);
   const [showReschedulePicker, setShowReschedulePicker] = useState(false);
   const [rescheduleDate, setRescheduleDate] = useState<Date | null>(null);
 
@@ -76,16 +79,103 @@ export default function DoctorClientComponent({
     setSelectedAppointment(null);
     setSelectedDate(formatted);
 
+    const string_date = formatted.replaceAll("/", "-");
+
     startLoadingAppointments(async () => {
-        console.log("Loading appointments for date: " + formatted);
-      const allAppointments = await mango.retrieveAppointmentsForDoctorOnDateRange(
-        doctor._id,
-        formatted.replaceAll("/", "-"),
-        formatted.replaceAll("/", "-")
-      )
+      console.log("Loading appointments for date: " + formatted);
+      const allAppointments =
+        await mango.retrieveAppointmentsForDoctorOnDateRange(
+          doctor._id,
+          string_date,
+          string_date
+        );
 
       setAppointments(allAppointments);
     });
+  }
+
+  function updateAppointment(Data: updateAppointment) {
+    if (!selectedAppointment) return;
+
+    try {
+      startUpdatingAppointmentStatus(async () => {
+        const updatingToast = toast.loading("Updating appointment...");
+
+        const originalDate = selectedAppointment.appointment.date as
+          | string
+          | null;
+
+        // Prepare fields to update: base + new data
+        const updateFields = {
+          doctor_id: String(selectedAppointment.appointment.doctor_id),
+          time_slot: selectedAppointment.appointment.time_slot,
+          date: selectedAppointment.appointment.date,
+          room: selectedAppointment.appointment.room,
+          urgency: selectedAppointment.appointment.urgency,
+          reason_for: selectedAppointment.appointment.reason_for,
+          status: selectedAppointment.appointment.status,
+          ...Data, // 🧠 Data overrides any of the fields above
+        };
+
+        const result = await mango.updateAppointmentForPatient(
+          String(selectedAppointment._id),
+          updateFields,
+          originalDate
+        );
+
+        toast.dismiss(updatingToast);
+
+        if (result.modifiedCount === 0) {
+          toast.error("No changes were made to the appointment.");
+          return;
+        }
+
+        toast.success("Appointment updated successfully.");
+        setRescheduleDate(null);
+
+        // If date changed, remove from the current list and clear selection
+        if (Data.date && Data.date !== originalDate) {
+          setSelectedAppointment(null);
+          setAppointments((prev) =>
+            prev.filter((app) => app._id !== selectedAppointment._id)
+          );
+        } else {
+          // Otherwise, update appointment locally
+          setSelectedAppointment((prev) => {
+            if (!prev) return null;
+            return {
+              ...prev,
+              appointment: {
+                ...prev.appointment,
+                ...Data,
+                doctor_id: Number(prev.appointment.doctor_id), // Ensure doctor_id is a number
+              },
+            };
+          });
+
+          setAppointments((prev) =>
+            prev.map((app) => {
+              if (app._id === selectedAppointment._id) {
+                return {
+                  ...app,
+                  appointment: {
+                    ...app.appointment,
+                    ...Data,
+                    doctor_id: Data.doctor_id
+                      ? Number(Data.doctor_id)
+                      : app.appointment.doctor_id, // ensure correct type
+                  },
+                };
+              }
+              return app;
+            })
+          );
+        }
+      });
+    } catch (error) {
+      console.error("Error updating appointment:", error);
+      toast.error("An error occurred while updating the appointment.");
+    }
   }
 
   return (
@@ -148,11 +238,15 @@ export default function DoctorClientComponent({
                 onClick={() => setSelectedAppointment(app)}
               >
                 <h2 className="font-semibold text-lg">
-                  {app.appointment.time_slot.split('-')[0].trimStart()} - {app.first_name} {app.last_name}
+                  {app.appointment.time_slot.split("-")[0].trimStart()} -{" "}
+                  {app.first_name} {app.last_name}
                 </h2>
-                <p className="text-sm text-gray-600">{app.appointment.reason_for}</p>
+                <p className="text-sm text-gray-600">
+                  {app.appointment.reason_for}
+                </p>
                 <p className="text-sm text-gray-500">
-                  Room: {app.appointment.room.name} | Urgency: {app.appointment.urgency}
+                  Room: {app.appointment.room.name} | Urgency:{" "}
+                  {app.appointment.urgency}
                 </p>
                 <span className="text-sm font-medium text-gray-700">
                   Status: {app.appointment.status}
@@ -173,13 +267,15 @@ export default function DoctorClientComponent({
               {selectedAppointment.last_name}
             </p>
             <p>
-              <strong>Reason:</strong> {selectedAppointment.appointment.reason_for}
+              <strong>Reason:</strong>{" "}
+              {selectedAppointment.appointment.reason_for}
             </p>
             <p>
               <strong>Room:</strong> {selectedAppointment.appointment.room.name}
             </p>
             <p>
-              <strong>Urgency:</strong> {selectedAppointment.appointment.urgency}
+              <strong>Urgency:</strong>{" "}
+              {selectedAppointment.appointment.urgency}
             </p>
             <p>
               <strong>Status:</strong> {selectedAppointment.appointment.status}
@@ -192,11 +288,9 @@ export default function DoctorClientComponent({
           {/* Status Actions */}
           <div className="flex flex-wrap gap-3 mb-6">
             <button
-              onClick={() =>
-                setSelectedAppointment((prev: any) =>
-                  prev ? { ...prev, status: "Completed" } : null
-                )
-              }
+              onClick={() => {
+                updateAppointment({ status: "Completed" });
+              }}
               className="bg-green-500 bg-opacity-30 hover:bg-opacity-100 text-green-800 px-4 py-2 rounded flex items-center gap-2"
             >
               ✅ Complete
@@ -210,22 +304,18 @@ export default function DoctorClientComponent({
             </button>
 
             <button
-              onClick={() =>
-                setSelectedAppointment((prev: any) =>
-                  prev ? { ...prev, status: "Confirmed" } : null
-                )
-              }
+              onClick={() => {
+                updateAppointment({ status: "Confirmed" });
+              }}
               className="bg-blue-500 bg-opacity-30 hover:bg-opacity-100 text-blue-900 px-4 py-2 rounded flex items-center gap-2"
             >
               ✔️ Confirm
             </button>
 
             <button
-              onClick={() =>
-                setSelectedAppointment((prev: any) =>
-                  prev ? { ...prev, status: "Cancelled" } : null
-                )
-              }
+              onClick={() => {
+                updateAppointment({ status: "Cancelled" });
+              }}
               className="bg-red-500 bg-opacity-30 hover:bg-opacity-100 text-red-900 px-4 py-2 rounded flex items-center gap-2"
             >
               ❌ Cancel
@@ -246,6 +336,10 @@ export default function DoctorClientComponent({
                         ? { ...prev, date: newDate, status: "Rescheduled" }
                         : null
                     );
+                    updateAppointment({
+                      status: "Rescheduled",
+                      date: newDate.replaceAll("/", "-"),
+                    });
                     setShowReschedulePicker(false);
                   }
                 }}

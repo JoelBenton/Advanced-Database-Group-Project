@@ -154,7 +154,6 @@ export async function retrieveAppointmentsForDoctorOnDateRange(
   start_date: string,
   end_date: string
 ) { 
-  console.log(start_date, end_date);
   const data = await aggregateDocuments("patient", [
     {
       $unwind: {
@@ -239,6 +238,39 @@ export async function createAppointmentForPatient(
       }
     }
   );
+  return result;
+}
+
+export async function updateAppointmentForPatient(
+  id: string,
+  Data: createAppointment,
+  orginal_date?: string | null,
+) {
+  console.log("Data", Data);
+  const result = await updateOne(
+    "patient",
+    {
+      _id: Number(id),
+      "appointments.time_slot": Data.time_slot,
+      "appointments.date": orginal_date || Data.date,
+      "appointments.doctor_id": Number(Data.doctor_id) 
+    },
+    {
+      $set: {
+        "appointments.$.time_slot": Data.time_slot,
+        "appointments.$.date": Data.date,
+        "appointments.$.room": {
+          name: Data.room.name,
+          equipment: Data.room.equipment
+        },
+        "appointments.$.urgency": Data.urgency,
+        "appointments.$.reason_for": Data.reason_for,
+        "appointments.$.doctor_id": Number(Data.doctor_id),
+        "appointments.$.status": Data.status
+      }
+    }
+  )
+  console.log("result", result);
   return result;
 }
 
