@@ -1,11 +1,44 @@
-import { useState } from "react";
+import { useEffect, useState, useTransition } from "react";
+import toast from "react-hot-toast";
 import { hasEmptyFields } from "../utils";
+import mongo from "../mongoIndex";
+import { PatientData } from "../types/patientQueries";
 
-interface CreatePatientProps {
+interface CreatePatientPageProps {
   onClose: () => void;
 }
 
-const CreatePatient = ({ onClose }: CreatePatientProps) => {
+const defaultForm = {
+  username: "",
+  password: "",
+  firstName: "",
+  lastName: "",
+  date_of_birth: "",
+  contact_number: "",
+  email: "",
+  address: {
+    postcode: "",
+    house_number: "",
+    address: "",
+  },
+  emergency_contact: {
+    name: "",
+    surname: "",
+    phone_number: "",
+    email: "",
+    relationship: "",
+  },
+  medical_records: [],
+  appointments: [],
+};
+
+const CreatePatientPage = ({ onClose }: CreatePatientPageProps) => {
+  const [_, startMaxIdsTransition] = useTransition();
+  const [isCreatePatientLoading, startCreatePatient] = useTransition();
+  const [maxPatientId, setMaxPatientId] = useState<number | null>(null);
+  const [maxUserId, setMaxUserId] = useState<number | null>(null);
+  const [form, setForm] = useState(defaultForm);
+
   const Relationships = [
     "Parent",
     "Sibling",
@@ -16,29 +49,14 @@ const CreatePatient = ({ onClose }: CreatePatientProps) => {
     "Colleague",
   ];
 
-  const [form, setForm] = useState({
-    username: "",
-    password: "",
-    firstName: "",
-    lastName: "",
-    date_of_birth: "",
-    contact_number: "",
-    email: "",
-    address: {
-      postcode: "",
-      house_number: "",
-      address: "",
-    },
-    emergency_contact: {
-      name: "",
-      surname: "",
-      phone_number: "",
-      email: "",
-      relationship: "",
-    },
-    medical_records: [],
-    appointments: [],
-  });
+  useEffect(() => {
+    startMaxIdsTransition(async () => {
+      const maxPatientId = await mongo.getLargestPatientId();
+      const maxUserId = await mongo.getLargestUserId();
+      setMaxPatientId(maxPatientId);
+      setMaxUserId(maxUserId);
+    });
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -77,162 +95,230 @@ const CreatePatient = ({ onClose }: CreatePatientProps) => {
 
   const handleCreateConfirm = () => {
     if (hasEmptyFields(form)) {
-      alert("Please fill in all fields");
+      toast.error("Please fill in all fields.");
       return;
     }
-    onClose();
+
+    createPatient();
   };
 
-  const Section = ({
-    title,
-    children,
-  }: {
-    title: string;
-    children: React.ReactNode;
-  }) => (
-    <div className="space-y-4 border-t pt-6">
-      <h3 className="text-xl font-semibold text-gray-700">{title}</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{children}</div>
-    </div>
-  );
+  const createPatient = () => {
+    startCreatePatient(async () => {
+      const createToast = toast.loading("Creating patient...");
+      const newPatient: PatientData = {
+        ...form,
+        _id: maxPatientId ? maxPatientId + 1 : 1,
+        user_id: maxUserId ? maxUserId + 1 : 1,
+        first_name: form.firstName,
+        last_name: form.lastName,
+        appointments: [],
+        medical_records: [],
+      };
 
-  const InputField = ({
-    label,
-    name,
-    value,
-    type = "text",
-  }: {
-    label: string;
-    name: string;
-    value: string;
-    type?: string;
-  }) => (
-    <div>
-      <label className="block text-sm font-medium mb-1">{label}</label>
-      <input
-        type={type}
-        name={name}
-        value={value}
-        onChange={handleChange}
-        className="w-full px-3 py-2 border rounded-md"
-      />
-    </div>
-  );
+      const result = await mongo.createUser({
+        _id: maxUserId ? maxUserId + 1 : 1,
+        username: form.username,
+        password_hash: form.password,
+        role: "patient",
+      });
+
+      if (result.acknowledged) {
+        toast.success("User created successfully");
+        const patientResult = await mongo.createPatient(newPatient);
+        if (patientResult.acknowledged) {
+          toast.success("Patient created successfully");
+          toast.custom("Reload page to see changes", {
+            icon: "🔄",
+          });
+          onClose();
+        } else {
+          toast.error("Failed to create patient");
+        }
+      } else {
+        toast.error("Failed to create user");
+      }
+
+      toast.dismiss(createToast);
+    });
+  };
 
   return (
-    <div className="p-6 bg-white rounded-xl shadow-md w-full mx-auto space-y-6">
-      <h2 className="text-2xl font-bold text-blue-700">Create Patient</h2>
+    <div className="p-6 bg-white rounded-xl shadow-xl max-w-4xl mx-auto mt-10 animate-fade-in">
+      <h2 className="text-2xl font-bold text-blue-700 mb-2">
+        Register New Patient
+      </h2>
+      <p className="text-sm text-gray-500 mb-6">
+        Please complete all fields before confirming.
+      </p>
 
-      <Section title="Account Details">
-        <InputField label="Username" name="username" value={form.username} />
-        <InputField
-          label="Password"
-          name="password"
-          value={form.password}
-          type="password"
-        />
-      </Section>
+      <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+        <section className="bg-gray-50 p-5 rounded-lg shadow-sm border mb-6">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Account Credentials
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input
+              name="username"
+              placeholder="Username"
+              value={form.username}
+              onChange={handleChange}
+              className="border px-3 py-2 rounded-lg"
+            />
+            <input
+              name="password"
+              placeholder="Password"
+              type="password"
+              value={form.password}
+              onChange={handleChange}
+              className="border px-3 py-2 rounded-lg"
+            />
+          </div>
+        </section>
 
-      <Section title="Personal Information">
-        <InputField
-          label="First Name"
-          name="firstName"
-          value={form.firstName}
-        />
-        <InputField label="Last Name" name="lastName" value={form.lastName} />
-        <InputField
-          label="Date of Birth"
-          name="date_of_birth"
-          value={form.date_of_birth}
-          type="date"
-        />
-        <InputField
-          label="Contact Number"
-          name="contact_number"
-          value={form.contact_number}
-        />
-        <InputField
-          label="Email"
-          name="email"
-          value={form.email}
-          type="email"
-        />
-      </Section>
+        <section className="bg-gray-50 p-5 rounded-lg shadow-sm border mb-6">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Personal Info
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input
+              name="firstName"
+              placeholder="First Name"
+              value={form.firstName}
+              onChange={handleChange}
+              className="border px-3 py-2 rounded-lg"
+            />
+            <input
+              name="lastName"
+              placeholder="Last Name"
+              value={form.lastName}
+              onChange={handleChange}
+              className="border px-3 py-2 rounded-lg"
+            />
+            <input
+              name="date_of_birth"
+              placeholder="Date of Birth"
+              type="date"
+              value={form.date_of_birth}
+              onChange={handleChange}
+              className="border px-3 py-2 rounded-lg"
+            />
+            <input
+              name="contact_number"
+              placeholder="Contact Number"
+              value={form.contact_number}
+              onChange={handleChange}
+              className="border px-3 py-2 rounded-lg"
+            />
+            <input
+              name="email"
+              placeholder="Email"
+              type="email"
+              value={form.email}
+              onChange={handleChange}
+              className="border px-3 py-2 rounded-lg"
+            />
+          </div>
+        </section>
 
-      <Section title="Address">
-        <InputField
-          label="Street Address"
-          name="address_address"
-          value={form.address.address}
-        />
-        <InputField
-          label="House Number"
-          name="address_house_number"
-          value={form.address.house_number}
-        />
-        <InputField
-          label="Postcode"
-          name="address_postcode"
-          value={form.address.postcode}
-        />
-      </Section>
+        <section className="bg-gray-50 p-5 rounded-lg shadow-sm border mb-6">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Residential Address
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input
+              name="address_address"
+              placeholder="Street Address"
+              value={form.address.address}
+              onChange={handleChange}
+              className="border px-3 py-2 rounded-lg"
+            />
+            <input
+              name="address_house_number"
+              placeholder="House Number"
+              value={form.address.house_number}
+              onChange={handleChange}
+              className="border px-3 py-2 rounded-lg"
+            />
+            <input
+              name="address_postcode"
+              placeholder="Postcode"
+              value={form.address.postcode}
+              onChange={handleChange}
+              className="border px-3 py-2 rounded-lg"
+            />
+          </div>
+        </section>
 
-      <Section title="Emergency Contact">
-        <InputField
-          label="First Name"
-          name="emergency_contact_name"
-          value={form.emergency_contact.name}
-        />
-        <InputField
-          label="Surname"
-          name="emergency_contact_surname"
-          value={form.emergency_contact.surname}
-        />
-        <InputField
-          label="Phone Number"
-          name="emergency_contact_phone_number"
-          value={form.emergency_contact.phone_number}
-        />
-        <InputField
-          label="Email"
-          name="emergency_contact_email"
-          value={form.emergency_contact.email}
-          type="email"
-        />
-        <div>
-          <label className="block text-sm font-medium mb-1">Relationship</label>
-          <select
-            name="emergency_contact_relationship"
-            value={form.emergency_contact.relationship}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-md"
+        <section className="bg-gray-50 p-5 rounded-lg shadow-sm border mb-6">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Emergency Contact
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input
+              name="emergency_contact_name"
+              placeholder="First Name"
+              value={form.emergency_contact.name}
+              onChange={handleChange}
+              className="border px-3 py-2 rounded-lg"
+            />
+            <input
+              name="emergency_contact_surname"
+              placeholder="Surname"
+              value={form.emergency_contact.surname}
+              onChange={handleChange}
+              className="border px-3 py-2 rounded-lg"
+            />
+            <input
+              name="emergency_contact_phone_number"
+              placeholder="Phone Number"
+              value={form.emergency_contact.phone_number}
+              onChange={handleChange}
+              className="border px-3 py-2 rounded-lg"
+            />
+            <input
+              name="emergency_contact_email"
+              placeholder="Email"
+              type="email"
+              value={form.emergency_contact.email}
+              onChange={handleChange}
+              className="border px-3 py-2 rounded-lg"
+            />
+            <select
+              name="emergency_contact_relationship"
+              value={form.emergency_contact.relationship}
+              onChange={handleChange}
+              className="border px-3 py-2 rounded-lg"
+            >
+              <option value="">Select relationship</option>
+              {Relationships.map((rel) => (
+                <option key={rel} value={rel}>
+                  {rel}
+                </option>
+              ))}
+            </select>
+          </div>
+        </section>
+
+        <div className="flex justify-end gap-4 pt-4 border-t mt-4">
+          <button
+            type="button"
+            onClick={() => onClose()}
+            className="text-sm font-medium text-gray-500 hover:text-gray-800"
           >
-            <option value="">Select a relationship</option>
-            {Relationships.map((rel) => (
-              <option key={rel} value={rel}>
-                {rel}
-              </option>
-            ))}
-          </select>
+            Cancel
+          </button>
+          <button
+            type="submit"
+            onClick={handleCreateConfirm}
+            disabled={isCreatePatientLoading}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
+          >
+            {isCreatePatientLoading ? "Creating..." : "Confirm"}
+          </button>
         </div>
-      </Section>
-
-      <div className="flex justify-between pt-6 border-t mt-6">
-        <button
-          onClick={onClose}
-          className="text-sm text-blue-600 underline hover:text-blue-800"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleCreateConfirm}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
-        >
-          Confirm
-        </button>
-      </div>
+      </form>
     </div>
   );
 };
 
-export default CreatePatient;
+export default CreatePatientPage;

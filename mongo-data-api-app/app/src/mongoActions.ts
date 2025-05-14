@@ -9,6 +9,7 @@ import { MedicalStaffCreate, MedicalStaffSpecialisationSearch, MedicalStaffAvail
 import { MedicalRecordCreate, MedicalRecordUpdate } from "./types/medicalRecordQueries";
 import { DoctorAppointments } from "./types/doctorTypes";
 import { createAppointment } from "./types/AppointmentTypes";
+import { hash } from "crypto";
 
 export async function testDatabaseConnection() {
   let isConnected = false;
@@ -35,10 +36,19 @@ export async function getLargestUserId() {
   return data[0]._id as unknown as number;
 }
 
+export async function createUser(Data: { _id: number, username: string, password_hash: string, role: string }) {
+  const data = await insertOne("users", Data);
+  return data;
+}
+
 /*
   The following functions are used to query the database for patients.
 */
 
+export async function createPatient(Data: PatientData) {
+  const data = await insertOne("patient", Data);
+  return data;
+}
 
 export async function getLargestPatientId() {
   const data = await findDocuments("patient", {}, { sort: { _id: -1 }, projection: { _id: 1 } }, 1 );
