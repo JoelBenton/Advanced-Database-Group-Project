@@ -20,6 +20,7 @@ import {
   updatePatientDetails,
   updateEmergencyContact,
   createAppointmentForPatient,
+  getLargestUserId,
 
 } from "./mongoActions";
 
@@ -45,6 +46,7 @@ const mongoActions = {
   updatePatientDetails,
   updateEmergencyContact,
   createAppointmentForPatient,
+  getLargestUserId,
 };
 
 export default mongoActions;

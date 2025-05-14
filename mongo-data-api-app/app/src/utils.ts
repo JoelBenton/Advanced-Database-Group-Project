@@ -42,3 +42,14 @@ export async function retrieveOpenSlotsForDoctorOnDate(
 
     return openSlots;
 }
+
+export function hasEmptyFields(obj: any): boolean {
+  for (const key in obj) {
+    if (typeof obj[key] === "string") {
+      if (obj[key].trim() === "") return true;
+    } else if (typeof obj[key] === "object" && obj[key] !== null) {
+      if (hasEmptyFields(obj[key])) return true;
+    }
+  }
+  return false;
+}

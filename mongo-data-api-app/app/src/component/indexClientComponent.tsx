@@ -10,6 +10,8 @@ import {
   CommandItem,
   CommandList,
 } from "./ui/command";
+import CreatePatient from "./CreatePatient";
+import CreateDoctor from "./CreateDoctor";
 
 interface ClientComponentProps {
   isConnected: boolean;
@@ -25,12 +27,18 @@ export default function ClientComponent({
   const router = useRouter();
   const [role, setRole] = useState<"patient" | "doctor" | null>(null);
   const [selectedId, setSelectedId] = useState("");
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   const list = role === "patient" ? patients : doctors;
 
   const handleConfirm = () => {
     if (selectedId) router.push(`/${role}/${selectedId}`);
   };
+
+  function handleRoleChange(newRole: "patient" | "doctor") {
+    setRole(newRole);
+    setSelectedId("");
+  }
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 to-blue-100 px-4 font-comic">
@@ -73,7 +81,7 @@ export default function ClientComponent({
                 name="role"
                 value={r}
                 checked={role === r}
-                onChange={() => setRole(r as "patient" | "doctor")}
+                onChange={() => handleRoleChange(r as "patient" | "doctor")}
                 className="w-6 h-6 accent-blue-500"
               />
               {r.charAt(0).toUpperCase() + r.slice(1)}
@@ -128,6 +136,24 @@ export default function ClientComponent({
             >
               Confirm
             </button>
+            {/* Create Button */}
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="w-full bg-green-500 text-white py-2 rounded-md font-semibold hover:bg-green-600 transition"
+            >
+              Create {role.charAt(0).toUpperCase() + role.slice(1)}
+            </button>
+
+            {/* Show correct create component */}
+            {showCreateForm && (
+              <div className="mt-4 p-4 border-2 border-dashed border-green-300 rounded-lg bg-green-50">
+                {role === "patient" ? (
+                  <CreatePatient onClose={() => setShowCreateForm(false)} />
+                ) : (
+                  <CreateDoctor onClose={() => setShowCreateForm(false)} />
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -27,6 +27,15 @@ export async function testDatabaseConnection() {
 }
 
 /*
+  The following functions are used to query the users database for all users.
+*/
+
+export async function getLargestUserId() {
+  const data = await findDocuments("users", {}, { sort: { _id: -1 }, projection: { _id: 1 } }, 1 );
+  return data[0]._id as unknown as number;
+}
+
+/*
   The following functions are used to query the database for patients.
 */
 
