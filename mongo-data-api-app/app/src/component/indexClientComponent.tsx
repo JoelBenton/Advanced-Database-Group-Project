@@ -2,6 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "./ui/command";
 
 interface ClientComponentProps {
   isConnected: boolean;
@@ -76,28 +84,42 @@ export default function ClientComponent({
         {/* Dropdown and Confirm */}
         {role && (
           <div className="space-y-4">
-            <select
-              className="w-full px-4 py-3 border-2 border-blue-200 rounded-md text-gray-800 text-lg"
-              value={selectedId}
-              onChange={(e) => setSelectedId(e.target.value)}
-            >
-              <option value="">{`Select a ${role}`}</option>
-              {[...list]
-                .sort((a, b) => {
-                  const nameA = `${a.first_name} ${
-                    a.last_name ?? ""
-                  }`.toLowerCase();
-                  const nameB = `${b.first_name} ${
-                    b.last_name ?? ""
-                  }`.toLowerCase();
-                  return nameA.localeCompare(nameB);
-                })
-                .map((person: any) => (
-                  <option key={person._id} value={person._id}>
-                    {person.first_name} {person.last_name ?? ""}
-                  </option>
-                ))}
-            </select>
+            <Command className="w-full border-2 border-blue-200 rounded-md shadow-sm">
+              <CommandInput placeholder={`Search for a ${role}...`} />
+              <CommandList className="max-h-60 overflow-y-auto">
+                <CommandGroup>
+                  {[...list]
+                    .sort((a, b) => {
+                      const nameA = `${a.first_name} ${
+                        role === "doctor"
+                          ? a.second_name ?? ""
+                          : a.last_name ?? ""
+                      }`.toLowerCase();
+                      const nameB = `${b.first_name} ${
+                        role === "doctor"
+                          ? b.second_name ?? ""
+                          : b.last_name ?? ""
+                      }`.toLowerCase();
+                      return nameA.localeCompare(nameB);
+                    })
+                    .map((person) => (
+                      <CommandItem
+                        key={person._id}
+                        value={person._id}
+                        onSelect={() => setSelectedId(person._id)}
+                        className={`cursor-pointer ${
+                          selectedId === person._id ? "bg-blue-100" : ""
+                        }`}
+                      >
+                        {person.first_name}{" "}
+                        {role === "doctor"
+                          ? person.second_name ?? ""
+                          : person.last_name ?? ""}
+                      </CommandItem>
+                    ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
 
             <button
               onClick={handleConfirm}
