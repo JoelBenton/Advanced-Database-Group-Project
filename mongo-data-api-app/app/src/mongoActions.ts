@@ -113,6 +113,11 @@ export async function createMedicalStaff(Data: MedicalStaffCreate) {
   return data;
 }
 
+export async function getLargestMedicalStaffId() {
+  const data = await findDocuments("medical_staff", {}, { sort: { _id: -1 }, projection: { _id: 1 } }, 1 );
+  return data[0]._id as unknown as number;
+}
+
 export async function getMedicalStaffById(id: string) {
   const data = await findDocuments("medical_staff", IDFilter(id));
   return data[0] as unknown as MedicalStaff;

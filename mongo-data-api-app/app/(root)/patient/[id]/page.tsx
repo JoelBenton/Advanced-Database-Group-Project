@@ -1,7 +1,6 @@
 import React, { Suspense } from "react";
 import mongo from "../../../src/mongoIndex";
 import PatientDetailClient from "@/app/src/component/PatientDetailClient";
-import { Toaster } from "react-hot-toast";
 
 interface Props {
   params: { id: string };
@@ -31,7 +30,6 @@ export default async function Page({ params }: Props) {
       {/* Main content */}
       <div className="max-w-3xl mx-auto mt-32">
         <Suspense fallback={<div>Loading...</div>}>
-          <Toaster position="top-center" reverseOrder={false} />
           <PatientDetailClient patient={patient} doctors={doctors} />
         </Suspense>
       </div>

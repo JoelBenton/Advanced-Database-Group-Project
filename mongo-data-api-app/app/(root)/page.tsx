@@ -1,6 +1,5 @@
 import ClientComponent from "../src/component/indexClientComponent";
 import mongo from "../src/mongoIndex";
-import { Toaster } from "react-hot-toast";
 
 export default async function Home() {
   const isConnected = await mongo.testDatabaseConnection();
@@ -9,7 +8,6 @@ export default async function Home() {
 
   return (
     <div className="w-full h-full">
-      <Toaster position="top-center" reverseOrder={false} />
       <ClientComponent
         isConnected={isConnected}
         patients={patients}

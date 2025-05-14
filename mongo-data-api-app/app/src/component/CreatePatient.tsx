@@ -11,8 +11,8 @@ interface CreatePatientPageProps {
 const defaultForm = {
   username: "",
   password: "",
-  firstName: "",
-  lastName: "",
+  first_name: "",
+  last_name: "",
   date_of_birth: "",
   contact_number: "",
   email: "",
@@ -105,24 +105,22 @@ const CreatePatientPage = ({ onClose }: CreatePatientPageProps) => {
   const createPatient = () => {
     startCreatePatient(async () => {
       const createToast = toast.loading("Creating patient...");
+      const { username, password, ...formWithoutCreds } = form;
+
       const newPatient: PatientData = {
-        ...form,
         _id: maxPatientId ? maxPatientId + 1 : 1,
         user_id: maxUserId ? maxUserId + 1 : 1,
-        first_name: form.firstName,
-        last_name: form.lastName,
-        appointments: [],
-        medical_records: [],
+        ...formWithoutCreds,
       };
 
-      const result = await mongo.createUser({
+      const userResult = await mongo.createUser({
         _id: maxUserId ? maxUserId + 1 : 1,
-        username: form.username,
-        password_hash: form.password,
+        username: username,
+        password_hash: password,
         role: "patient",
       });
 
-      if (result.acknowledged) {
+      if (userResult.acknowledged) {
         toast.success("User created successfully");
         const patientResult = await mongo.createPatient(newPatient);
         if (patientResult.acknowledged) {
@@ -181,16 +179,16 @@ const CreatePatientPage = ({ onClose }: CreatePatientPageProps) => {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
-              name="firstName"
+              name="first_name"
               placeholder="First Name"
-              value={form.firstName}
+              value={form.first_name}
               onChange={handleChange}
               className="border px-3 py-2 rounded-lg"
             />
             <input
-              name="lastName"
+              name="last_name"
               placeholder="Last Name"
-              value={form.lastName}
+              value={form.last_name}
               onChange={handleChange}
               className="border px-3 py-2 rounded-lg"
             />

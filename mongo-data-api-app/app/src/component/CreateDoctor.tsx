@@ -1,21 +1,31 @@
-import { useState } from "react";
+import { useEffect, useState, useTransition } from "react";
+import toast from "react-hot-toast";
+import { hasEmptyFields } from "../utils";
+import mongo from "../mongoIndex";
+import { MedicalStaff } from "../types/medicalStaffQueries";
 
-interface CreateDoctorProps {
+interface CreateDoctorPageProps {
   onClose: () => void;
 }
 
-const CreateDoctor = ({ onClose }: CreateDoctorProps) => {
-  const [form, setForm] = useState({
+const defaultForm = {
     username: "",
     password: "",
-    firstName: "",
-    secondName: "",
+    first_name: "",
+    second_name: "",
     specialisation: "",
-    contactNumber: "",
+    contact_number: "",
     email: "",
-    availabilityStart: "09:00",
-    availabilityEnd: "17:00",
-  });
+    availability_start_time: "09:00",
+    availability_end_time: "17:00",
+  };
+
+const CreateDoctorPage = ({ onClose }: CreateDoctorPageProps) => {
+  const [_, startMaxIdsTransition] = useTransition();
+  const [isCreateDoctorLoading, startCreateDoctor] = useTransition();
+  const [maxMedStaffId, setMaxMedStaffId] = useState<number | null>(null);
+  const [maxUserId, setMaxUserId] = useState<number | null>(null);
+  const [form, setForm] = useState(defaultForm);
 
   const allTimes = Array.from({ length: 48 }, (_, i) => {
     const hours = Math.floor(i / 2)
@@ -26,8 +36,17 @@ const CreateDoctor = ({ onClose }: CreateDoctorProps) => {
   });
 
   const endTimeOptions = allTimes.filter(
-    (time) => time > form.availabilityStart
+    (time) => time > form.availability_start_time
   );
+
+  useEffect(() => {
+    startMaxIdsTransition(async () => {
+      const maxMedStaffId = await mongo.getLargestMedicalStaffId();
+      const maxUserId = await mongo.getLargestUserId();
+      setMaxMedStaffId(maxMedStaffId);
+      setMaxUserId(maxUserId);
+    });
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -38,7 +57,7 @@ const CreateDoctor = ({ onClose }: CreateDoctorProps) => {
       [name]: value,
     }));
 
-    if (name === "availabilityStart" && value >= form.availabilityEnd) {
+    if (name === "availability_start_time" && value >= form.availability_end_time) {
       const nextValid = allTimes.find((t) => t > value);
       if (nextValid) {
         setForm((prev) => ({ ...prev, availabilityEnd: nextValid }));
@@ -46,22 +65,52 @@ const CreateDoctor = ({ onClose }: CreateDoctorProps) => {
     }
   };
 
-  function handleCreateConfirm() {
-    if (
-      !form.username ||
-      !form.password ||
-      !form.firstName ||
-      !form.secondName ||
-      !form.specialisation ||
-      !form.contactNumber ||
-      !form.email ||
-      !form.availabilityStart ||
-      !form.availabilityEnd
-    ) {
-      alert("Please fill in all fields");
+  const handleCreateConfirm = () => {
+    if (hasEmptyFields(form)) {
+      toast.error("Please fill in all fields.");
       return;
     }
-    onClose();
+
+    createDoctor();
+  };
+
+  const createDoctor = () => {
+    startCreateDoctor(async () => {
+      const createToast = toast.loading("Creating doctor...");
+      const { username, password, ...formWithoutCreds } = form;
+
+      const newDoctor: MedicalStaff = {
+        _id: maxMedStaffId ? maxMedStaffId + 1 : 1,
+        user_id: maxUserId ? maxUserId + 1 : 1,
+        ...formWithoutCreds,
+        role: 'Doctor'
+      }
+
+      const userResult = await mongo.createUser({
+        _id: maxUserId ? maxUserId + 1 : 1,
+        username: username,
+        password_hash: password,
+        role: "Doctor",
+      });
+
+      if (userResult.acknowledged) {
+        toast.success("User created successfully");
+        const doctorResult = await mongo.createMedicalStaff(newDoctor);
+        if (doctorResult.acknowledged) {
+          toast.success("Doctor created successfully");
+          toast.custom("Reload page to see changes", {
+            icon: "🔄",
+          });
+          onClose();
+        } else {
+          toast.error("Failed to create doctor");
+        }
+      } else {
+        toast.error("Failed to create user");
+      }
+
+      toast.dismiss(createToast);
+    });
   }
 
   return (
@@ -95,8 +144,8 @@ const CreateDoctor = ({ onClose }: CreateDoctorProps) => {
           <label className="block text-sm font-medium mb-1">First Name</label>
           <input
             type="text"
-            name="firstName"
-            value={form.firstName}
+            name="first_name"
+            value={form.first_name}
             onChange={handleChange}
             className="w-full px-3 py-2 border rounded-md"
           />
@@ -106,8 +155,8 @@ const CreateDoctor = ({ onClose }: CreateDoctorProps) => {
           <label className="block text-sm font-medium mb-1">Second Name</label>
           <input
             type="text"
-            name="secondName"
-            value={form.secondName}
+            name="second_name"
+            value={form.second_name}
             onChange={handleChange}
             className="w-full px-3 py-2 border rounded-md"
           />
@@ -132,8 +181,8 @@ const CreateDoctor = ({ onClose }: CreateDoctorProps) => {
           </label>
           <input
             type="text"
-            name="contactNumber"
-            value={form.contactNumber}
+            name="contact_number"
+            value={form.contact_number}
             onChange={handleChange}
             className="w-full px-3 py-2 border rounded-md"
           />
@@ -156,7 +205,7 @@ const CreateDoctor = ({ onClose }: CreateDoctorProps) => {
           </label>
           <select
             name="availabilityStart"
-            value={form.availabilityStart}
+            value={form.availability_start_time}
             onChange={handleChange}
             className="w-full px-3 py-2 border rounded-md"
           >
@@ -174,7 +223,7 @@ const CreateDoctor = ({ onClose }: CreateDoctorProps) => {
           </label>
           <select
             name="availabilityEnd"
-            value={form.availabilityEnd}
+            value={form.availability_end_time}
             onChange={handleChange}
             className="w-full px-3 py-2 border rounded-md"
           >
@@ -196,14 +245,16 @@ const CreateDoctor = ({ onClose }: CreateDoctorProps) => {
         </button>
 
         <button
+          type="submit"
           onClick={handleCreateConfirm}
+          disabled={isCreateDoctorLoading}
           className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
         >
-          Confirm
+          {isCreateDoctorLoading ? "Creating..." : "Confirm"}
         </button>
       </div>
     </div>
   );
 };
 
-export default CreateDoctor;
+export default CreateDoctorPage;
