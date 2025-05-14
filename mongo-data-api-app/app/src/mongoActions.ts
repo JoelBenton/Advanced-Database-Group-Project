@@ -4,11 +4,11 @@ import client from "@/lib/mongodb";
 import { aggregateDocuments, deleteOne, findDocuments, insertOne, updateOne } from "./mongoHelpers";
 import { patientOrFilter } from "./queries/patient";
 import { IDFilter } from "./queries/shared";
-import { PatientData, PatientQueryConditions } from "./types/patientQueries";
+import { PatientData, PatientQueryConditions, UpdateEmergencyContact, UpdatePatientDetails } from "./types/patientQueries";
 import { MedicalStaffCreate, MedicalStaffSpecialisationSearch, MedicalStaffAvailabilitySearch, MedicalStaffAvailabilitySearchWithSpecialisation, MedicalStaff } from "./types/medicalStaffQueries";
 import { MedicalRecordCreate, MedicalRecordUpdate } from "./types/medicalRecordQueries";
-import path from "path";
 import { DoctorAppointments } from "./types/doctorTypes";
+import { createAppointment } from "./types/AppointmentTypes";
 
 export async function testDatabaseConnection() {
   let isConnected = false;
@@ -30,6 +30,12 @@ export async function testDatabaseConnection() {
   The following functions are used to query the database for patients.
 */
 
+
+export async function getLargestPatientId() {
+  const data = await findDocuments("patient", {}, { sort: { _id: -1 }, projection: { _id: 1 } }, 1 );
+  return data[0]._id as unknown as number;
+}
+
 export async function getPatientsOrStatement(Conditions: PatientQueryConditions = {}) {
   const data = await findDocuments("patient", patientOrFilter(Conditions));
   return data;
@@ -48,6 +54,35 @@ export async function retreieveAllPatients() {
 export async function deletePatientById(id: string) {
   const data = await deleteOne("patient", IDFilter(id));
   return data;
+}
+
+export async function updatePatientDetails(id: string, Data: UpdatePatientDetails) {
+  const result = await updateOne("patient", IDFilter(id), {
+    $set: {
+      date_of_birth: Data.date_of_birth,
+      contact_number: Data.contact_number,
+      email: Data.email,
+      address: {
+        postcode: Data.address?.postcode,
+        house_number: Data.address?.house_number,
+        address: Data.address?.address
+      }
+    }
+  });
+  return result;
+}
+
+export async function updateEmergencyContact(id: string, Data: UpdateEmergencyContact) {
+  const result = await updateOne("patient", IDFilter(id), {
+    $set: {
+      "emergency_contact.name": Data.name,
+      "emergency_contact.surname": Data.surname,
+      "emergency_contact.email": Data.email,
+      "emergency_contact.phone_number": Data.phone_number,
+      "emergency_contact.relationship": Data.relationship
+    }
+  });
+  return result;
 }
 
 /*
@@ -169,6 +204,33 @@ export async function retrieveAppointmentSlotsForDoctorOnDateRange(
   ]);
   
   return data as unknown as [{ time_slot: string }];
+}
+
+export async function createAppointmentForPatient(
+  id: string,
+  Data: createAppointment
+) {
+  const result = await updateOne(
+    "patient",
+    IDFilter(id),
+    {
+      $push: {
+        appointments: {
+          time_slot: Data.time_slot,
+          date: Data.date,
+          room: {
+            name: Data.room.name,
+            equipment: Data.room.equipment
+          },
+          urgency: Data.urgency,
+          reason_for: Data.reason_for,
+          doctor_id: Data.doctor_id,
+          status: Data.status
+        }
+      }
+    }
+  );
+  return result;
 }
 
 /* Medical Records Queries */

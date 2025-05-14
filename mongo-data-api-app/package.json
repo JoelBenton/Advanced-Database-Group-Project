@@ -11,7 +11,8 @@
     "next": "latest",
     "react": "^18",
     "react-datepicker": "^8.3.0",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "react-hot-toast": "^2.5.2"
   },
   "devDependencies": {
     "@types/node": "^20",

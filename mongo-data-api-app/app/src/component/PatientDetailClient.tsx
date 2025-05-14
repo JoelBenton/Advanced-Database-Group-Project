@@ -8,6 +8,8 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format, parse, set } from "date-fns";
 import { retrieveOpenSlotsForDoctorOnDate } from "../utils";
+import mongo from "../mongoIndex";
+import toast from "react-hot-toast";
 
 interface Props {
   patient: PatientData;
@@ -36,7 +38,12 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
     useTransition();
   const [isCreateAppointmentPending, startCreateAppointmentTransition] =
     useTransition();
+  const [isUpdatePatientPending, startUpdatePatientTransition] =
+    useTransition();
+  const [isUpdateEmergencyPending, startUpdateEmergencyTransition] =
+    useTransition();
   const [openSlots, setOpenSlots] = useState<string[]>([]);
+  const [updatePatientMsg, setUpdatePatientMsg] = useState("");
 
   const [selectedDate, setSelectedDate] = useState(
     format(new Date(), "yyyy/MM/dd")
@@ -70,6 +77,16 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
     "Follow-up": "Blood Pressure Monitor",
     "Diagnostic Test": "X-Ray Machine",
   };
+
+  const Relationships = [
+    "Parent",
+    "Sibling",
+    "Spouse",
+    "Child",
+    "Friend",
+    "Other",
+    "Colleague",
+  ];
 
   const [infoForm, setInfoForm] = useState({
     date_of_birth: patient.date_of_birth,
@@ -131,8 +148,6 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
   );
 
   const handleSelectDoctor = async (doctor_id: string) => {
-    console.log("Selected doctor ID:", doctor_id);
-
     const selected = doctors.find((doc) => doc._id === Number(doctor_id));
     if (!selected) {
       return;
@@ -163,7 +178,7 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
       !selectedUrgency ||
       !selectedReason
     ) {
-      console.error("Missing required fields for appointment creation");
+      toast.error("Please fill in all fields.");
       return;
     }
     const randomNumber = Math.floor(Math.random() * 10); // Between 1 and 10
@@ -176,12 +191,35 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
         equipment: appointment_equipment[selectedReason] || "Unknown Equipment",
       },
       urgency: selectedUrgency,
-      reason_for: selectedReason,
-      doctor_id: selectedDoctor._id,
+      reason_for: selectedReason as string,
+      doctor_id: String(selectedDoctor._id),
       status: "Pending",
     };
 
-    console.log("Creating appointment:", appointment);
+    startCreateAppointmentTransition(async () => {
+      const savingToast = toast.loading("Saving changes...");
+
+      try {
+        const result = await mongo.createAppointmentForPatient(
+          String(patient._id),
+          appointment
+        );
+
+        if (result.modifiedCount === 0) {
+          toast.dismiss(savingToast);
+          toast("No changes made.", { icon: "ℹ️" });
+        } else {
+          toast.success("Appointment created successfully.", {
+            id: savingToast,
+          });
+        }
+
+        setShowAppointmentModal(false);
+        patient.appointments.push(appointment);
+      } catch (error) {
+        toast.error("Error creating appointment.", { id: savingToast });
+      }
+    });
 
     setShowAppointmentModal(false);
 
@@ -191,6 +229,88 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
     setSelectedUrgency("Low");
     setSelectedReason("Routine Checkup");
     setOpenSlots([]);
+  }
+
+  function handlePatientUpdateSave() {
+    startUpdatePatientTransition(async () => {
+      const savingToast = toast.loading("Saving changes...");
+
+      try {
+        const result = await mongo.updatePatientDetails(
+          String(patient._id),
+          infoForm
+        );
+
+        if (result.modifiedCount === 0) {
+          toast.dismiss(savingToast);
+          toast("No changes made.", { icon: "ℹ️" });
+        } else {
+          toast.success("Patient details updated successfully.", {
+            id: savingToast,
+          });
+
+          patient.date_of_birth = infoForm.date_of_birth;
+          patient.contact_number = infoForm.contact_number;
+          patient.email = infoForm.email;
+          patient.address = infoForm.address;
+        }
+
+        setEditingInfo(false);
+      } catch (error) {
+        toast.error("Error updating patient details.", { id: savingToast });
+        setEditingInfo(false);
+      }
+    });
+  }
+
+  function handleEmergencyUpdateSave() {
+    if (
+      !emergencyForm.name ||
+      !emergencyForm.surname ||
+      !emergencyForm.email ||
+      !emergencyForm.phone_number ||
+      !emergencyForm.relationship
+    ) {
+      toast.error("Please fill in all fields.");
+      return;
+    }
+    if (emergencyForm.phone_number.length < 10) {
+      toast.error("Phone number must be at least 10 digits.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emergencyForm.email)) {
+      toast.error("Invalid email address.");
+      return;
+    }
+    if (!Relationships.includes(emergencyForm.relationship)) {
+      toast.error("Invalid relationship.");
+      return;
+    }
+    startUpdateEmergencyTransition(async () => {
+      const savingToast = toast.loading("Saving changes...");
+
+      try {
+        const result = await mongo.updateEmergencyContact(
+          String(patient._id),
+          emergencyForm
+        );
+        if (result.modifiedCount === 0) {
+          toast.dismiss(savingToast);
+          toast("No changes made.", { icon: "ℹ️" });
+        } else {
+          toast.success("Patient details updated successfully.", {
+            id: savingToast,
+          });
+
+          patient.emergency_contact = emergencyForm;
+        }
+
+        setEditingEmergency(false);
+      } catch (error) {
+        toast.error("Error updating patient details.", { id: savingToast });
+        setEditingInfo(false);
+      }
+    });
   }
 
   return (
@@ -286,7 +406,11 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
                   )}
                 </div>
                 <div className="mt-4 flex gap-3">
-                  <button className="bg-blue-500 text-white px-4 py-2 rounded">
+                  <button
+                    className="bg-blue-500 text-white px-4 py-2 rounded"
+                    onClick={handlePatientUpdateSave}
+                    disabled={isUpdatePatientPending}
+                  >
                     Save
                   </button>
                   <button
@@ -361,15 +485,37 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
                     emergencyForm.phone_number,
                     (e) => handleEmergencyChange("phone_number", e.target.value)
                   )}
-                  {renderInput(
-                    "emergency-relationship",
-                    "Relationship",
-                    emergencyForm.relationship,
-                    (e) => handleEmergencyChange("relationship", e.target.value)
-                  )}
+                  <div>
+                    <label
+                      htmlFor="relationship"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Relationship
+                    </label>
+                    <select
+                      onChange={(e) =>
+                        handleEmergencyChange(
+                          "relationship",
+                          e.target.value as (typeof Relationships)[number]
+                        )
+                      }
+                      value={emergencyForm.relationship}
+                      className="input p-3 text-lg border rounded-md shadow-md w-full"
+                    >
+                      <option value="">Select a relationship</option>
+                      {Relationships.map((relationship) => (
+                        <option key={relationship} value={relationship}>
+                          {relationship}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 <div className="mt-4 flex gap-3">
-                  <button className="bg-blue-500 text-white px-4 py-2 rounded">
+                  <button
+                    className="bg-blue-500 text-white px-4 py-2 rounded"
+                    onClick={handleEmergencyUpdateSave}
+                  >
                     Save
                   </button>
                   <button

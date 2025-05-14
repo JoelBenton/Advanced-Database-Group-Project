@@ -1,6 +1,6 @@
-import React, { Suspense } from "react";
+import React from "react";
 import DoctorClientComponent from "../../../src/component/DoctorClientComponent";
-import mongo from "../../../src/mongoIndex"
+import mongo from "../../../src/mongoIndex";
 
 interface Props {
   params: { id: string };

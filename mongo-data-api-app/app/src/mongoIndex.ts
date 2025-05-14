@@ -1,5 +1,6 @@
 import {
   testDatabaseConnection,
+  getLargestPatientId,
   getPatientsOrStatement,
   retreieveAllPatients,
   getPatientById,
@@ -16,30 +17,34 @@ import {
   retrieveAppointmentsForDoctorOnDateRange,
   getDoctorAvailityById,
   retrieveAppointmentSlotsForDoctorOnDateRange,
+  updatePatientDetails,
+  updateEmergencyContact,
+  createAppointmentForPatient,
 
 } from "./mongoActions";
 
 const mongoActions = {
   testDatabaseConnection,
+  getLargestPatientId,
   getPatientsOrStatement,
   retreieveAllPatients,
   getPatientById,
   deletePatientById,
   createMedicalStaff,
-
   getMedicalStaffById,
   listDoctersBySpeciality,
   listAllDocters,
   listAllDoctersWithAllData,
   listAvailableDoctors,
   listAvailableDoctorsBySpeciality,
-
   createMedicalRecord,
   updateMedicalRecord,
-
   retrieveAppointmentsForDoctorOnDateRange,
   getDoctorAvailityById,
   retrieveAppointmentSlotsForDoctorOnDateRange,
+  updatePatientDetails,
+  updateEmergencyContact,
+  createAppointmentForPatient,
 };
 
 export default mongoActions;

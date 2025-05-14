@@ -5,6 +5,25 @@ export type PatientQueryConditions = {
     email?: string;
 }
 
+export type UpdatePatientDetails = {
+    date_of_birth?: string; // ISO date format, e.g., "1948-01-09"
+    contact_number?: string;
+    email?: string;
+    address?: {
+        postcode?: string;
+        house_number?: string;
+        address?: string;
+    };
+}
+
+export type UpdateEmergencyContact = {
+  name: string;
+  surname: string;
+  email: string;
+  phone_number: string;
+  relationship: string;
+}
+
 export type PatientData = {
   _id: number;
   user_id: number;
@@ -51,7 +70,7 @@ export type PatientData = {
     };
     urgency: string;
     reason_for: string;
-    doctor_id: number;
+    doctor_id: string;
     status: string;
   }[];
 };

@@ -12,10 +12,15 @@ async function getCollection(collectionName: string) {
   return db.collection(collectionName);
 }
 
-export async function findDocuments(collection: string, query = {}, options = {}) {
+export async function findDocuments(collection: string, query = {}, options = {}, limit: number | null = null) {
   const col = await getCollection(collection);
-  const result = await col.find(query, options).toArray();
-  return result;
+  if (limit) {
+    const result = await col.find(query, options).limit(limit).toArray();
+    return result;
+  } else {
+    const result = await col.find(query, options).toArray();
+    return result;
+  }
 }
 
 export async function aggregateDocuments(collection: string, pipeline: object[]) {
