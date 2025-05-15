@@ -9,6 +9,7 @@ import mango from "../mongoIndex";
 import { DoctorAppointments } from "../types/doctorTypes";
 import toast from "react-hot-toast";
 import { updateAppointment } from "../types/AppointmentTypes";
+import { MedicalRecordCreate } from "../types/medicalRecordQueries";
 
 export default function DoctorClientComponent({
   id,
@@ -92,6 +93,17 @@ export default function DoctorClientComponent({
 
       setAppointments(allAppointments);
     });
+  }
+
+  async function createMedicalRecord(Data: MedicalRecordCreate) {
+    try {
+      const result = await mango.createMedicalRecord(Data);
+      toast.success("Medical record created successfully.");
+      return result;
+    } catch (error) {
+      console.error("Error creating medical record:", error);
+      toast.error("An error occurred while creating the medical record.");
+    }
   }
 
   function updateAppointment(Data: updateAppointment) {
@@ -492,8 +504,26 @@ export default function DoctorClientComponent({
             </div>
 
             <button
-              onClick={() => {
-                alert("Medical Record Saved");
+              onClick={async () => {
+                if (!selectedAppointment) return;
+
+                const recordDateFormatted = medicalRecord.date.replaceAll(
+                  "/",
+                  "-"
+                );
+
+                const newRecord: MedicalRecordCreate = {
+                   patient_id: selectedAppointment._id.toString(),
+                  doctor_id: doctor._id,
+                  record_date: recordDateFormatted,
+                  diagnosis: medicalRecord.diagnosis,
+                  treatment: medicalRecord.treatment,
+                  notes: medicalRecord.notes,
+                };
+
+                await createMedicalRecord(newRecord); // ✅ CALL the function here
+
+                // Optionally reset the form
                 setMedicalRecord({
                   date: "",
                   diagnosis: "",
