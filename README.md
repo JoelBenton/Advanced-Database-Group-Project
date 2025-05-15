@@ -5,7 +5,7 @@ JNR^2
 ## **Group Members**
 1. **Joel Benton** - *j.benton1852@canterbury.ac.uk*
 2. **Ramona Ciceu** - *r.ciceu782@canterbury.ac.uk*
-3. **Josh IlesCanCa** - *j.iles91@canterbury.ac.uk*
+3. **Josh Iles** - *j.iles91@canterbury.ac.uk*
 4. **Niko Di Pasquali** - *n.dipasquali266@canterbury.ac.uk*
 5. **Rheana Rai** - *r.rai412@canterbury.ac.uk* 
 

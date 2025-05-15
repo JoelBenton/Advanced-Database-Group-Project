@@ -47,7 +47,7 @@ cp .env.local.example .env.local
 
 - `MONGODB_URI`: Your MongoDB connection string (from step 1).
 
-> 🛑 **Important**: Do not share this file or commit it to version control—it contains sensitive data.
+> 🛑 **Important**: Do not share this file or commit it to version control, since it contains sensitive data.
 
 ---
 
@@ -75,6 +75,6 @@ pnpm dev
 
 Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
-In the top left corner, you should see a connection indicator with either a red or green cirle. If it is green, the connection is successful.
+In the top left corner, you should see a connection indicator with either a red or green circle. If it is green, the connection is successful.
 
 ---
