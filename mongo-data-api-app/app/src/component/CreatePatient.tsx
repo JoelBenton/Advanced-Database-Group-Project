@@ -99,6 +99,19 @@ const CreatePatientPage = ({ onClose }: CreatePatientPageProps) => {
       return;
     }
 
+    if (form.password.length < 8) {
+      toast.error("Password must be at least 8 characters long.");
+      return;
+    }
+    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(form.email)) {
+      toast.error("Invalid email format.");
+      return;
+    }
+    if (!/^[0-9]{10}$/.test(form.contact_number)) {
+      toast.error("Contact number must be 10 digits long.");
+      return;
+    }
+
     createPatient();
   };
 

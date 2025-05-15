@@ -9,16 +9,16 @@ interface CreateDoctorPageProps {
 }
 
 const defaultForm = {
-    username: "",
-    password: "",
-    first_name: "",
-    second_name: "",
-    specialisation: "",
-    contact_number: "",
-    email: "",
-    availability_start_time: "09:00",
-    availability_end_time: "17:00",
-  };
+  username: "",
+  password: "",
+  first_name: "",
+  second_name: "",
+  specialisation: "",
+  contact_number: "",
+  email: "",
+  availability_start_time: "09:00",
+  availability_end_time: "17:00",
+};
 
 const CreateDoctorPage = ({ onClose }: CreateDoctorPageProps) => {
   const [_, startMaxIdsTransition] = useTransition();
@@ -57,7 +57,10 @@ const CreateDoctorPage = ({ onClose }: CreateDoctorPageProps) => {
       [name]: value,
     }));
 
-    if (name === "availability_start_time" && value >= form.availability_end_time) {
+    if (
+      name === "availability_start_time" &&
+      value >= form.availability_end_time
+    ) {
       const nextValid = allTimes.find((t) => t > value);
       if (nextValid) {
         setForm((prev) => ({ ...prev, availabilityEnd: nextValid }));
@@ -68,6 +71,23 @@ const CreateDoctorPage = ({ onClose }: CreateDoctorPageProps) => {
   const handleCreateConfirm = () => {
     if (hasEmptyFields(form)) {
       toast.error("Please fill in all fields.");
+      return;
+    }
+
+    if (form.availability_start_time >= form.availability_end_time) {
+      toast.error("End time must be after start time.");
+      return;
+    }
+    if (form.password.length < 8) {
+      toast.error("Password must be at least 8 characters long.");
+      return;
+    }
+    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(form.email)) {
+      toast.error("Invalid email format.");
+      return;
+    }
+    if (!/^[0-9]{10}$/.test(form.contact_number)) {
+      toast.error("Contact number must be 10 digits long.");
       return;
     }
 
@@ -83,8 +103,8 @@ const CreateDoctorPage = ({ onClose }: CreateDoctorPageProps) => {
         _id: maxMedStaffId ? maxMedStaffId + 1 : 1,
         user_id: maxUserId ? maxUserId + 1 : 1,
         ...formWithoutCreds,
-        role: 'Doctor'
-      }
+        role: "Doctor",
+      };
 
       const userResult = await mongo.createUser({
         _id: maxUserId ? maxUserId + 1 : 1,
@@ -111,7 +131,7 @@ const CreateDoctorPage = ({ onClose }: CreateDoctorPageProps) => {
 
       toast.dismiss(createToast);
     });
-  }
+  };
 
   return (
     <div className="p-6 bg-white rounded-xl shadow-md w-full mx-auto space-y-6">
