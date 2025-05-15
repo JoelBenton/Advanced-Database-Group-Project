@@ -2,8 +2,8 @@
 
 import client from "@/lib/mongodb";
 import { aggregateDocuments, deleteOne, findDocuments, insertOne, updateOne } from "./mongoHelpers";
-import { patientOrFilter } from "./queries/patient";
-import { IDFilter } from "./queries/shared";
+import { patientOrFilter } from "./query_filters/patient";
+import { IDFilter } from "./query_filters/shared";
 import { PatientData, PatientQueryConditions, UpdateEmergencyContact, UpdatePatientDetails } from "./types/patientQueries";
 import { MedicalStaffCreate, MedicalStaffSpecialisationSearch, MedicalStaffAvailabilitySearch, MedicalStaffAvailabilitySearchWithSpecialisation, MedicalStaff } from "./types/medicalStaffQueries";
 import { MedicalRecordCreate, MedicalRecordUpdate } from "./types/medicalRecordQueries";
