@@ -70,7 +70,7 @@ export type PatientData = {
     };
     urgency: string;
     reason_for: string;
-    doctor_id: string;
+    doctor_id: number;
     status: string;
   }[];
 };

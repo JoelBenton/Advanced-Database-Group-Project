@@ -1,5 +1,5 @@
 export type createAppointment = {
-    doctor_id: string;
+    doctor_id: number;
     time_slot: string;
     date: string; // ISO date format, e.g., "2025-05-02"
     room: {
@@ -12,7 +12,7 @@ export type createAppointment = {
 }
 
 export type updateAppointment = {
-    doctor_id?: string;
+    doctor_id?: number;
     time_slot?: string;
     date?: string; // ISO date format, e.g., "2025-05-02"
     room?: {

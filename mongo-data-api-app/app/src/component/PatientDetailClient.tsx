@@ -192,7 +192,7 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
       },
       urgency: selectedUrgency,
       reason_for: selectedReason as string,
-      doctor_id: String(selectedDoctor._id),
+      doctor_id: Number(selectedDoctor._id),
       status: "Pending",
     };
 
