@@ -21,7 +21,7 @@ Once your database is set up:
 
 1. Create **three collections**:
    - `users`
-   - `patients`
+   - `patient`
    - `medical_staff`
 
 2. Import the corresponding `.csv` files located in the `fake_data/` folder into each collection. You can use [MongoDB Compass](https://www.mongodb.com/products/compass) or CLI tools like `mongoimport`.
@@ -32,6 +32,31 @@ mongoimport --uri "your-mongodb-uri" --collection users --type csv --headerline 
 ```
 
 Repeat this for `patients.csv` and `medical_staff.csv`.
+
+---
+
+## 2.5. ⚡ Create Indexes for Optimal Performance
+
+After importing your data, you can manually add indexes to optimise query performance. You can do this using **MongoDB Compass** or the **MongoDB shell**.
+
+### 👉 Run the following index creation commands:
+
+```js
+// 📁 patient collection
+db.patient.createIndex({ user_id: 1 }, { unique: true });
+db.patient.createIndex({ "appointments.doctor_id": 1, "appointments.date": 1 });
+db.patient.createIndex({ "medical_records.record_date": -1 });
+db.patient.createIndex({ email: 1 });
+
+// 📁 medical_staff collection
+db.medical_staff.createIndex({ user_id: 1 }, { unique: true });
+db.medical_staff.createIndex({ specialisation: 1 });
+db.medical_staff.createIndex({ availability_start_time: 1 });
+db.medical_staff.createIndex({ availability_start_time: 1, availability_end_time: 1 });
+
+// 📁 users collection
+db.users.createIndex({ role: 1 });
+```
 
 ---
 
