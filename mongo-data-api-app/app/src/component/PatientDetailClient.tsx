@@ -48,6 +48,7 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
   const [selectedDate, setSelectedDate] = useState(
     format(new Date(), "yyyy/MM/dd")
   );
+  const [selectedSpecialisation, setSelectedSpecialisation] = useState("All");
   const [selectedDoctor, setSelectedDoctor] = useState<MedicalStaff | null>(
     null
   );
@@ -55,6 +56,8 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
   const [selectedUrgency, setSelectedUrgency] = useState<string>("Low");
   const [selectedReason, setSelectedReason] =
     useState<keyof typeof appointment_equipment>("Routine Checkup");
+
+  const specialisations = ["All", ...Array.from(new Set(doctors.map(doc => doc.specialisation)))];
 
   const togglePrescription = (key: string) => {
     setExpandedPrescriptions((prev) => ({
@@ -313,6 +316,10 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
     });
   }
 
+  const filteredDoctors = selectedSpecialisation === "All"
+    ? doctors
+    : doctors.filter(doc => doc.specialisation === selectedSpecialisation);
+
   return (
     <>
       {/* Top-left "Switch User" button */}
@@ -329,11 +336,10 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
             <button
               key={key}
               onClick={() => setView(key)}
-              className={`px-4 py-2 rounded-full font-medium transition ${
-                view === key
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 hover:bg-gray-300"
-              }`}
+              className={`px-4 py-2 rounded-full font-medium transition ${view === key
+                ? "bg-blue-500 text-white"
+                : "bg-gray-200 hover:bg-gray-300"
+                }`}
             >
               {label}
             </button>
@@ -542,11 +548,13 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
                 className="bg-white shadow-sm rounded-lg p-6 border-l-4 border-blue-500 hover:bg-gray-50 transition-colors"
               >
                 <p className="text-lg font-medium text-gray-700">
-                  <strong>Doctor:</strong>{" "}
+                  <strong>By:</strong>{" "}
                   {
-                    doctors.find((doc) => doc._id === record.doctor_id)
-                      ?.first_name
-                  }{" "}
+                    (() => {
+                      const doc = doctors.find((doc) => doc._id === record.doctor_id);
+                      return doc ? `Dr. ${doc.first_name} ${doc.second_name}` : "Unknown";
+                    })()
+                  }
                 </p>
                 <p className="text-lg font-medium text-gray-700">
                   <strong>Date:</strong> {record.record_date}
@@ -631,8 +639,8 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
 
             {showAppointmentModal && (
               <div className="bg-gray-50 p-4 rounded-lg border shadow-sm mb-6 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
+                  <div>
                     <label className="mr-2 font-medium block mb-1">
                       📅 Select Date:
                     </label>
@@ -664,27 +672,49 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
                       dateFormat="yyyy/MM/dd"
                       placeholderText="YYYY/MM/DD"
                       className="border border-gray-400 p-2 rounded w-full"
+                      minDate={new Date()} // prevent past date selection
                     />
                   </div>
 
                   {/* Step 2: Doctor (after date) */}
                   {selectedDate && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Doctor
-                      </label>
-                      <select
-                        onChange={(e) => handleSelectDoctor(e.target.value)}
-                        value={selectedDoctor?._id ?? ""}
-                        className="input p-3 text-lg border rounded-md shadow-md w-full"
-                      >
-                        <option value="">Select a doctor</option>
-                        {doctors.map((doc) => (
-                          <option key={doc._id} value={doc._id}>
-                            {doc.first_name} {doc.second_name}
-                          </option>
-                        ))}
-                      </select>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Specialisation Selection */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Specialisation
+                        </label>
+                        <select
+                          value={selectedSpecialisation}
+                          onChange={(e) => setSelectedSpecialisation(e.target.value)}
+                          className="input p-3 text-lg border rounded-md shadow-md w-full"
+                        >
+                          {specialisations.map((spec) => (
+                            <option key={spec} value={spec}>
+                              {spec}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {/* Doctor Selection */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Doctor
+                        </label>
+                        <select
+                          onChange={(e) => handleSelectDoctor(e.target.value)}
+                          value={selectedDoctor?._id ?? ""}
+                          className="input p-3 text-lg border rounded-md shadow-md w-full"
+                        >
+                          <option value="">Select a doctor</option>
+                          {filteredDoctors.map((doc) => (
+                            <option key={doc._id} value={doc._id}>
+                              {doc.first_name} {doc.second_name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   )}
 
@@ -696,8 +726,8 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
                   )}
 
                   {selectedDate &&
-                  selectedDoctor &&
-                  !isAvailableSlotsPending ? (
+                    selectedDoctor &&
+                    !isAvailableSlotsPending ? (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Time Slot
@@ -720,30 +750,12 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
                         )}
                       </select>
                     </div>
-                  ) : (
-                    <div></div>
-                  )}
+                  ) : null}
 
-                  {/* Step 4: Urgency and Reason (after time_slot) */}
+                  {/* Step 4: Reason and Urgency (after Time Slot) */}
                   {selectedTimeSlot && (
                     <>
-                      {
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Urgency
-                          </label>
-                          <select
-                            onChange={(e) => setSelectedUrgency(e.target.value)}
-                            value={selectedUrgency ?? ""}
-                            className="input p-3 text-lg border rounded-md shadow-md w-full"
-                          >
-                            <option value="Low">Low</option>
-                            <option value="Medium">Medium</option>
-                            <option value="High">High</option>
-                          </select>
-                        </div>
-                      }
-                      {
+                      <div className="grid grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Reason
@@ -771,13 +783,27 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
                             )}
                           </select>
                         </div>
-                      }
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Urgency
+                          </label>
+                          <select
+                            onChange={(e) => setSelectedUrgency(e.target.value)}
+                            value={selectedUrgency ?? ""}
+                            className="input p-3 text-lg border rounded-md shadow-md w-full"
+                          >
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                          </select>
+                        </div>
+                      </div>
                     </>
                   )}
                 </div>
 
                 {/* Step 5: Save and Cancel */}
-                <div className="flex justify-end gap-3">
+                <div className="flex justify-end gap-3 pt-2">
                   <button
                     onClick={() => setShowAppointmentModal(false)}
                     className="bg-gray-300 px-4 py-2 rounded"
