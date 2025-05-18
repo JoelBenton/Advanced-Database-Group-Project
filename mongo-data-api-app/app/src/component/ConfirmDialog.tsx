@@ -6,12 +6,16 @@ interface ConfirmDialogProps {
   message: string;
   onConfirm: () => void;
   onCancel: () => void;
+  confirmText?: string;
+  cancelText?: string;
 }
 
 export default function ConfirmDialog({
   message,
   onConfirm,
   onCancel,
+  confirmText = "Confirm",
+  cancelText = "Cancel",
 }: ConfirmDialogProps) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
@@ -22,13 +26,13 @@ export default function ConfirmDialog({
             onClick={onCancel}
             className="w-full px-4 py-2 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300"
           >
-            Cancel
+            {cancelText}
           </button>
           <button
             onClick={onConfirm}
             className="w-full px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700"
           >
-            Close
+            {confirmText}
           </button>
         </div>
       </div>

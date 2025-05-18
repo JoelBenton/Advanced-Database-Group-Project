@@ -10,6 +10,8 @@ import { format, parse, set } from "date-fns";
 import { retrieveOpenSlotsForDoctorOnDate } from "../utils";
 import mongo from "../mongoIndex";
 import toast from "react-hot-toast";
+import ConfirmDialog from "./ConfirmDialog";
+import { updateAppointment } from "../types/AppointmentTypes";
 
 interface Props {
   patient: PatientData;
@@ -56,6 +58,44 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
   const [selectedUrgency, setSelectedUrgency] = useState<string>("Low");
   const [selectedReason, setSelectedReason] =
     useState<keyof typeof appointment_equipment>("Routine Checkup");
+
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [appointmentToCancel, setAppointmentToCancel] = useState<updateAppointment | null>(null);
+
+  const handleRequestCancel = (appt: updateAppointment) => {
+    setAppointmentToCancel(appt);
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!appointmentToCancel) return;
+    const toastId = toast.loading("Cancelling appointment...");
+    try {
+      const updateFields = {
+        ...appointmentToCancel,
+        status: "Cancelled",
+      };
+
+      const result = await mongo.updateAppointmentForPatient(
+        String(patient._id),
+        updateFields,
+        appointmentToCancel.date
+      );
+
+      toast.dismiss(toastId);
+      if (result.modifiedCount > 0) {
+        toast.success("Appointment cancelled.");
+        appointmentToCancel.status = "Cancelled"; // Optimistic local update
+      } else {
+        toast.error("No changes made.");
+      }
+    } catch {
+      toast.error("Error cancelling appointment.");
+    } finally {
+      setShowConfirmDialog(false);
+      setAppointmentToCancel(null);
+    }
+  };
 
   const specialisations = ["All", ...Array.from(new Set(doctors.map(doc => doc.specialisation)))];
 
@@ -331,12 +371,12 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
       </button>
       <div className="bg-white rounded-xl shadow-xl p-6 space-y-6 relative">
         {/* Tabs */}
-        <div className="flex flex-wrap justify-center gap-4">
+        <div className="flex w-full gap-2">
           {tabs.map(({ label, key }) => (
             <button
               key={key}
               onClick={() => setView(key)}
-              className={`px-4 py-2 rounded-full font-medium transition ${view === key
+              className={`flex-auto px-4 py-2 rounded-md font-medium transition ${view === key
                 ? "bg-blue-500 text-white"
                 : "bg-gray-200 hover:bg-gray-300"
                 }`}
@@ -361,7 +401,7 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
             {!editingInfo ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <p>
-                  <strong>DOB:</strong> {patient.date_of_birth}
+                  <strong>Date of Birth:</strong> {patient.date_of_birth}
                 </p>
                 <p>
                   <strong>Phone:</strong> {patient.contact_number}
@@ -832,8 +872,7 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
                   <strong>Reason:</strong> {appt.reason_for}
                 </p>
                 <p>
-                  <strong>Room:</strong> {appt.room.name} ({appt.room.equipment}
-                  )
+                  <strong>Room:</strong> {appt.room.name} ({appt.room.equipment})
                 </p>
                 <p>
                   <strong>Urgency:</strong> {appt.urgency}
@@ -844,6 +883,32 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
                 <p>
                   <strong>Status:</strong> {appt.status}
                 </p>
+
+                {/* Show cancellation button if suitable.
+                Note that .toDateString() is required to discard time. */}
+                {(appt.status === "Confirmed" || appt.status === "Pending") &&
+                  new Date(appt.date).toDateString() >= new Date().toDateString() && (
+                    <button
+                      onClick={() => handleRequestCancel(appt)}
+                      className="text-sm mt-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+                    >
+                      Cancel Appointment
+                    </button>
+                  )}
+
+                {showConfirmDialog && (
+                  <ConfirmDialog
+                    message="Are you sure you want to cancel this appointment?"
+                    confirmText="Yes, Cancel"
+                    cancelText="Go Back"
+                    onConfirm={handleConfirmCancel}
+                    onCancel={() => {
+                      setShowConfirmDialog(false);
+                      setAppointmentToCancel(null);
+                    }}
+                  />
+                )}
+
               </div>
             ))}
           </div>
