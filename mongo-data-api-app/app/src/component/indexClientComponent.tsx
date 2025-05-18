@@ -12,6 +12,7 @@ import {
 } from "./ui/command";
 import CreatePatient from "./CreatePatient";
 import CreateDoctor from "./CreateDoctor";
+import Modal from "./Modal";
 
 interface ClientComponentProps {
   isConnected: boolean;
@@ -29,7 +30,10 @@ export default function ClientComponent({
   const [selectedId, setSelectedId] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
 
-  const list = role === "patient" ? patients : doctors;
+  const [patientsState, setPatientsState] = useState(patients);
+  const [doctorsState, setDoctorsState] = useState(doctors);
+
+  const list = role === "patient" ? patientsState : doctorsState;
 
   const handleConfirm = () => {
     if (selectedId) router.push(`/${role}/${selectedId}`);
@@ -46,9 +50,8 @@ export default function ClientComponent({
       <div className="absolute top-4 left-4 flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow">
         <span className="text-sm font-medium text-gray-700">Database:</span>
         <span
-          className={`w-3 h-3 rounded-full ${
-            isConnected ? "bg-green-500" : "bg-red-500"
-          }`}
+          className={`w-3 h-3 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"
+            }`}
         />
       </div>
 
@@ -91,69 +94,77 @@ export default function ClientComponent({
 
         {/* Dropdown and Confirm */}
         {role && (
-          <div className="space-y-4">
-            <Command className="w-full border-2 border-blue-200 rounded-md shadow-sm">
-              <CommandInput placeholder={`Search for a ${role}...`} />
-              <CommandList className="max-h-60 overflow-y-auto">
-                <CommandGroup>
-                  {[...list]
-                    .sort((a, b) => {
-                      const nameA = `${a.first_name} ${
-                        role === "doctor"
+          <div>
+            <div className="space-y-4">
+              <Command className="w-full border-2 border-blue-200 rounded-md shadow-sm">
+                <CommandInput placeholder={`Search for a ${role}...`} />
+                <CommandList className="max-h-60 overflow-y-auto">
+                  <CommandGroup>
+                    {[...list]
+                      .sort((a, b) => {
+                        const nameA = `${a.first_name} ${role === "doctor"
                           ? a.second_name ?? ""
                           : a.last_name ?? ""
-                      }`.toLowerCase();
-                      const nameB = `${b.first_name} ${
-                        role === "doctor"
+                          }`.toLowerCase();
+                        const nameB = `${b.first_name} ${role === "doctor"
                           ? b.second_name ?? ""
                           : b.last_name ?? ""
-                      }`.toLowerCase();
-                      return nameA.localeCompare(nameB);
-                    })
-                    .map((person) => (
-                      <CommandItem
-                        key={person._id}
-                        value={person._id}
-                        onSelect={() => setSelectedId(person._id)}
-                        className={`cursor-pointer ${
-                          selectedId === person._id ? "bg-blue-100" : ""
-                        }`}
-                      >
-                        {person.first_name}{" "}
-                        {role === "doctor"
-                          ? person.second_name ?? ""
-                          : person.last_name ?? ""}
-                      </CommandItem>
-                    ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
+                          }`.toLowerCase();
+                        return nameA.localeCompare(nameB);
+                      })
+                      .map((person) => (
+                        <CommandItem
+                          key={person._id}
+                          value={person._id}
+                          onSelect={() => setSelectedId(person._id)}
+                          className={`cursor-pointer ${selectedId === person._id ? "bg-blue-100" : ""
+                            }`}
+                        >
+                          {person.first_name}{" "}
+                          {role === "doctor"
+                            ? person.second_name ?? ""
+                            : person.last_name ?? ""}
+                        </CommandItem>
+                      ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
 
-            <button
-              onClick={handleConfirm}
-              disabled={!selectedId}
-              className="w-full bg-blue-600 text-white py-3 rounded-xl text-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
-            >
-              Confirm
-            </button>
-            {/* Create Button */}
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="w-full bg-green-500 text-white py-2 rounded-md font-semibold hover:bg-green-600 transition"
-            >
-              Create {role.charAt(0).toUpperCase() + role.slice(1)}
-            </button>
-
-            {/* Show correct create component */}
-            {showCreateForm && (
-              <div className="mt-4 p-4 border-2 border-dashed border-green-300 rounded-lg bg-green-50">
+              <button
+                onClick={handleConfirm}
+                disabled={!selectedId}
+                className="w-full bg-blue-600 text-white py-3 rounded-xl text-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
+              >
+                View Dashboard
+              </button>
+              {/* Create Button */}
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="w-full bg-green-500 text-white py-2 rounded-md font-semibold hover:bg-green-600 transition"
+              >
+                {role.charAt(0).toUpperCase() + role.slice(1)} Registration
+              </button>
+            </div>
+            <div>
+              {/* Show correct create component */}
+              <Modal isOpen={showCreateForm} onClose={() => setShowCreateForm(false)}>
                 {role === "patient" ? (
-                  <CreatePatient onClose={() => setShowCreateForm(false)} />
+                  <CreatePatient
+                    onClose={() => setShowCreateForm(false)}
+                    addPatient={(newPatient) =>
+                      setPatientsState((prev) => [...prev, newPatient])
+                    }
+                  />
                 ) : (
-                  <CreateDoctor onClose={() => setShowCreateForm(false)} />
+                  <CreateDoctor
+                    onClose={() => setShowCreateForm(false)}
+                    addDoctor={(newDoctor) =>
+                      setDoctorsState((prev) => [...prev, newDoctor])
+                    }
+                  />
                 )}
-              </div>
-            )}
+              </Modal>
+            </div>
           </div>
         )}
       </div>

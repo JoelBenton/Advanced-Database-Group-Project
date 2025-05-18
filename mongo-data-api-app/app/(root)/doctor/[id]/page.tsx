@@ -13,7 +13,7 @@ export default async function Page({ params }: Props) {
       {/* Top-right badge */}
       <div className="absolute top-6 right-6 bg-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3">
         <span className="text-lg font-semibold text-gray-700">
-          👩‍⚕️ {doctor.first_name} {doctor.second_name}
+          👩‍⚕️ Dr. {doctor.first_name} {doctor.second_name}
         </span>
       </div>
 

@@ -6,6 +6,7 @@ import { PatientData } from "../types/patientQueries";
 
 interface CreatePatientPageProps {
   onClose: () => void;
+  addPatient: (patient: PatientData) => void;
 }
 
 const defaultForm = {
@@ -32,7 +33,7 @@ const defaultForm = {
   appointments: [],
 };
 
-const CreatePatientPage = ({ onClose }: CreatePatientPageProps) => {
+const CreatePatientPage = ({ onClose, addPatient }: CreatePatientPageProps) => {
   const [_, startMaxIdsTransition] = useTransition();
   const [isCreatePatientLoading, startCreatePatient] = useTransition();
   const [maxPatientId, setMaxPatientId] = useState<number | null>(null);
@@ -107,8 +108,8 @@ const CreatePatientPage = ({ onClose }: CreatePatientPageProps) => {
       toast.error("Invalid email format.");
       return;
     }
-    if (!/^[0-9]{10}$/.test(form.contact_number)) {
-      toast.error("Contact number must be 10 digits long.");
+    if (!/^[0-9]{10,}$/.test(form.contact_number)) {
+      toast.error("Contact number must be at least 10 digits long.");
       return;
     }
 
@@ -138,9 +139,7 @@ const CreatePatientPage = ({ onClose }: CreatePatientPageProps) => {
         const patientResult = await mongo.createPatient(newPatient);
         if (patientResult.acknowledged) {
           toast.success("Patient created successfully");
-          toast.custom("Reload page to see changes", {
-            icon: "🔄",
-          });
+          addPatient(newPatient);
           onClose();
         } else {
           toast.error("Failed to create patient");
@@ -154,9 +153,9 @@ const CreatePatientPage = ({ onClose }: CreatePatientPageProps) => {
   };
 
   return (
-    <div className="p-6 bg-white rounded-xl shadow-xl max-w-4xl mx-auto mt-10 animate-fade-in">
+    <div className="p-6 bg-green-50 rounded-xl border-2 border-dashed border-green-300 max-w-4xl mx-auto animate-fade-in">
       <h2 className="text-2xl font-bold text-blue-700 mb-2">
-        Register New Patient
+        Patient Registration Form
       </h2>
       <p className="text-sm text-gray-500 mb-6">
         Please complete all fields before confirming.
