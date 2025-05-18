@@ -302,7 +302,7 @@ export async function createMedicalRecord(Data: MedicalRecordCreate) {
           record_date: Data.record_date,
           diagnosis: Data.diagnosis,
           treatment: Data.treatment,
-          prescriptions: [],
+          prescriptions: Data.prescriptions,
           notes: Data.notes
         }
       }

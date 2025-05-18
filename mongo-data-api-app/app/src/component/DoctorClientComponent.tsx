@@ -237,11 +237,10 @@ export default function DoctorClientComponent({
               appointments.map((app) => (
                 <div
                   key={app._id}
-                  className={`p-4 rounded-lg border-2 shadow-sm cursor-pointer transition ${
-                    selectedAppointment?._id === app._id
-                      ? "bg-[rgb(59,130,246)] bg-opacity-20 border-[rgb(59,130,246)]"
-                      : "bg-white border-gray-300 hover:bg-[rgb(59,130,246)] hover:bg-opacity-20 hover:border-[rgb(59,130,246)]"
-                  }`}
+                  className={`p-4 rounded-lg border-2 shadow-sm cursor-pointer transition ${selectedAppointment?._id === app._id
+                    ? "bg-[rgb(59,130,246)] bg-opacity-20 border-[rgb(59,130,246)]"
+                    : "bg-white border-gray-300 hover:bg-[rgb(59,130,246)] hover:bg-opacity-20 hover:border-[rgb(59,130,246)]"
+                    }`}
                   onClick={() => setSelectedAppointment(app)}
                 >
                   <h2 className="font-semibold text-lg">
@@ -481,12 +480,20 @@ export default function DoctorClientComponent({
                       className="border border-gray-400 p-2 rounded"
                     />
 
-                    <button
-                      onClick={handleAddPrescription}
-                      className="mt-2 md:col-span-2 bg-[rgb(59,130,246)] text-white px-4 py-2 rounded bg-opacity-60 hover:bg-opacity-100"
-                    >
-                      ➕ Add Prescription
-                    </button>
+                    <div className="mt-2 md:col-span-2 flex gap-2">
+                      <button
+                        onClick={handleAddPrescription}
+                        className="w-full bg-[rgb(59,130,246)] text-white px-4 py-2 rounded bg-opacity-60 hover:bg-opacity-100"
+                      >
+                        💾 Save Prescription
+                      </button>
+                      <button
+                        onClick={() => setShowPrescriptionForm(false)}
+                        className="w-full bg-red-500 text-white px-4 py-2 rounded bg-opacity-60 hover:bg-opacity-100"
+                      >
+                        ❌ Cancel Prescription
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <button
@@ -502,6 +509,30 @@ export default function DoctorClientComponent({
                 onClick={async () => {
                   if (!selectedAppointment) return;
 
+                  // Validate medical record fields
+                  if (!medicalRecord.date || !medicalRecord.diagnosis || !medicalRecord.treatment || !medicalRecord.notes) {
+                    toast.error("Please fill in all fields before saving.");
+                    return; // Prevent save if required fields are missing
+                  }
+
+                  // Validate prescriptions
+                  if (prescriptions.length === 0) {
+                    toast.error("Please add at least one prescription before saving.");
+                    return; // Prevent save if no prescriptions are added
+                  }
+
+                  // Check if prescription fields are filled but not added
+                  if (
+                    prescriptionInput.medication ||
+                    prescriptionInput.dosage ||
+                    prescriptionInput.duration ||
+                    prescriptionInput.instructions
+                  ) {
+                    // Warn the user that they haven't added the prescription
+                    toast.error("Please save or cancel the pending prescription before saving the record.");
+                    return; // Prevent the save from happening
+                  }
+
                   const recordDateFormatted = medicalRecord.date.replaceAll(
                     "/",
                     "-"
@@ -514,9 +545,10 @@ export default function DoctorClientComponent({
                     diagnosis: medicalRecord.diagnosis,
                     treatment: medicalRecord.treatment,
                     notes: medicalRecord.notes,
+                    prescriptions: prescriptions
                   };
 
-                  await createMedicalRecord(newRecord); // ✅ CALL the function here
+                  await createMedicalRecord(newRecord);
 
                   // Optionally reset the form
                   setMedicalRecord({
@@ -530,7 +562,7 @@ export default function DoctorClientComponent({
                 }}
                 className="mt-6 bg-[rgb(59,130,246)] text-white px-4 py-2 rounded bg-opacity-60 hover:bg-opacity-100"
               >
-                📀 Save Record
+                💾 Save Record
               </button>
             </div>
           </div>
