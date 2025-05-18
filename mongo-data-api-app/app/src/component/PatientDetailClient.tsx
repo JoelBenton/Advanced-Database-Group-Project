@@ -884,10 +884,9 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
                   <strong>Status:</strong> {appt.status}
                 </p>
 
-                {/* Show cancellation button if suitable.
-                Note that .toDateString() is required to discard time. */}
+                {/* Show cancellation button if suitable.*/}
                 {(appt.status === "Confirmed" || appt.status === "Pending") &&
-                  new Date(appt.date).toDateString() >= new Date().toDateString() && (
+                  new Date(appt.date).getTime() >= new Date().setHours(0, 0, 0, 0) && (
                     <button
                       onClick={() => handleRequestCancel(appt)}
                       className="text-sm mt-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"

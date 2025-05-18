@@ -11,6 +11,6 @@ JNR^2
 
 ## **Folders**
 
-1. **Fake Data Generator**: Located in the `fake_date` folder, this Python script is responsible for generating realistic fake data to populate the MongoDB database. This data will be used for testing and development purposes.
+1. `fake_date`: Contains a Python script responsible for generating realistic fake data to populate the MongoDB database. Also contains pre-generated `.json` files to simplify the setup process.
 
-2. **Frontend Application**: The `mongo-data-api-app` folder contains a Next.js-based frontend application. This serves as the user interface for interacting with the MongoDB instance, providing a seamless and intuitive experience. Click [here](./mongo-data-api-app/README.md) to find out how to run the application
+2. `mongo-data-api-app`: This is the Next.js-based frontend application and serves as the user interface for interacting with the MongoDB instance, providing a seamless and intuitive experience. Click [here](./mongo-data-api-app/README.md) to find out how to run the application.

@@ -1,37 +1,37 @@
 # 🛠️ Project Configuration Guide
 
-Follow these steps to get your project up and running with MongoDB and Next.js.
+Follow these steps to get the application up and running with MongoDB and Next.js.
 
 ---
 
-## 1. 📦 Set Up Your MongoDB Database
+## 1. 📦 Set Up The MongoDB Database
 
 You have two options for setting up MongoDB:
 
 - **Locally**: Install MongoDB on your machine from the [official website](https://www.mongodb.com/try/download/community).
-- **Cloud (Recommended)**: Use [MongoDB Atlas](https://mongodb.com/atlas) for a free, cloud-hosted database.
+- **Cloud**: Use [MongoDB Atlas](https://mongodb.com/atlas) for a free, cloud-hosted database.
 
-> 💡 For MongoDB Atlas, after creating a cluster, click the **"Connect"** button to obtain your connection string.
+> 💡 For MongoDB Atlas, after creating a cluster, click the **"Connect"** button to obtain the connection string.
 
 ---
 
 ## 2. 🗃️ Populate the Database
 
-Once your database is set up:
+Once the database is set up:
 
 1. Create **three collections**:
    - `users`
    - `patient`
    - `medical_staff`
 
-2. Import the corresponding `.csv` files located in the `fake_data/` folder into each collection. You can use [MongoDB Compass](https://www.mongodb.com/products/compass) or CLI tools like `mongoimport`.
+2. Import the corresponding `.json` files located in the `fake_data/` folder into each collection. You can use [MongoDB Compass](https://www.mongodb.com/products/compass) or CLI tools like `mongoimport`.
 
-**Example with `mongoimport`:**
-```bash
-mongoimport --uri "your-mongodb-uri" --collection users --type csv --headerline --file ./fake_data/users.csv
-```
+   **Example with `mongoimport` (Be sure to use the connection string `uri` from step 1):**
+   ```bash
+   mongoimport --uri "your-mongodb-uri" --collection users --type json --file ./fake_data/users.json
+   ```
 
-Repeat this for `patients.csv` and `medical_staff.csv`.
+   Repeat this for `patients.json` and `medicalStaff.json`, ensuring they go in the correct collections.
 
 ---
 
@@ -62,13 +62,14 @@ db.users.createIndex({ role: 1 });
 
 ## 3. 🔐 Set Up Environment Variables
 
-1. Copy the example environment file:
+1. Ensure that `mongo-data-api-app` is your working directory
+2. Copy the example environment file:
 
-```bash
-cp .env.local.example .env.local
-```
+   ```bash
+   cp .env.local.example .env.local
+   ```
 
-2. Edit `.env.local` and set the following variable:
+3. Edit `.env.local` and set the following variable:
 
 - `MONGODB_URI`: Your MongoDB connection string (from step 1).
 
@@ -78,21 +79,23 @@ cp .env.local.example .env.local
 
 ## 4. 🚀 Start the Development Server
 
-Install dependencies and start the app using your preferred package manager:
+1. Ensure that `mongo-data-api-app` is your working directory
 
-```bash
-# Using npm
-npm install
-npm run dev
+2. Install dependencies and start the app using your preferred package manager:
 
-# Using yarn
-yarn install
-yarn dev
+   ```bash
+   # Using npm
+   npm install
+   npm run dev
 
-# Using pnpm
-pnpm install
-pnpm dev
-```
+   # Using yarn
+   yarn install
+   yarn dev
+
+   # Using pnpm
+   pnpm install
+   pnpm dev
+   ```
 
 ---
 
