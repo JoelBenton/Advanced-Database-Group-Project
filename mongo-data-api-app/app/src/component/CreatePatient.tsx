@@ -211,6 +211,7 @@ const CreatePatientPage = ({ onClose, addPatient }: CreatePatientPageProps) => {
               value={form.date_of_birth}
               onChange={handleChange}
               className="border px-3 py-2 rounded-lg"
+              max={new Date().toISOString().split("T")[0]} // today's date in YYYY-MM-DD format
             />
             <input
               name="contact_number"
