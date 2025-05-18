@@ -650,13 +650,14 @@ export default function PatientDetailClient({ patient, doctors }: Props) {
                           </div>
                         );
                       })}
-                      <p className="text-gray-700">
-                        <strong>Notes:</strong> {record.notes}
-                      </p>
+
                     </div>
                   ) : (
                     <p className="text-gray-500">No prescriptions available</p>
                   )}
+                  <p className="text-gray-700 mt-4">
+                    <strong>Notes:</strong> {record.notes}
+                  </p>
                 </div>
               </div>
             ))}

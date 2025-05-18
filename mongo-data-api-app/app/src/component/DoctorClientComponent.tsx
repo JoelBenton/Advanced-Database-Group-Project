@@ -515,12 +515,6 @@ export default function DoctorClientComponent({
                     return; // Prevent save if required fields are missing
                   }
 
-                  // Validate prescriptions
-                  if (prescriptions.length === 0) {
-                    toast.error("Please add at least one prescription before saving.");
-                    return; // Prevent save if no prescriptions are added
-                  }
-
                   // Check if prescription fields are filled but not added
                   if (
                     prescriptionInput.medication ||
