@@ -236,7 +236,7 @@ export default function DoctorClientComponent({
             ) : (
               appointments.map((app) => (
                 <div
-                  key={app._id}
+                  key={`${app._id}-${app.appointment.time_slot}`}
                   className={`p-4 rounded-lg border-2 shadow-sm cursor-pointer transition ${selectedAppointment?._id === app._id
                     ? "bg-[rgb(59,130,246)] bg-opacity-20 border-[rgb(59,130,246)]"
                     : "bg-white border-gray-300 hover:bg-[rgb(59,130,246)] hover:bg-opacity-20 hover:border-[rgb(59,130,246)]"

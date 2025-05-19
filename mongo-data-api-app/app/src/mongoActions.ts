@@ -181,7 +181,8 @@ export async function retrieveAppointmentsForDoctorOnDateRange(
         "appointments.date": {
           $gte: start_date,
           $lte: end_date
-        }
+        },
+        "appointments.status": { $ne: "Cancelled" }
       }
     },
     {
@@ -215,7 +216,8 @@ export async function retrieveAppointmentSlotsForDoctorOnDateRange(
         "appointments.date": {
           $gte: start_date,
           $lte: end_date
-        }
+        },
+        "appointments.status": { $ne: "Cancelled" }
       }
     },
     {
