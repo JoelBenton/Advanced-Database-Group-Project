@@ -131,7 +131,7 @@ const CreatePatientPage = ({ onClose, addPatient }: CreatePatientPageProps) => {
         _id: maxUserId ? maxUserId + 1 : 1,
         username: username,
         password_hash: password,
-        role: "patient",
+        role: "Patient",
       });
 
       if (userResult.acknowledged) {

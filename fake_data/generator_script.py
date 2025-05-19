@@ -52,7 +52,7 @@ def generate_users(num_records):
             "_id": i + 1,
             "username": fake.user_name(),
             "password_hash": fake.password(),
-            "role": "User",  # Default role, doctors will have role overridden later
+            "role": "User",  # Default role, doctors and patients will have role overridden later
         })
     return users
 
@@ -186,6 +186,10 @@ patients = generate_patients(num_patients, patient_user_ids)
 # Update roles for medical staff in users list
 for user_id in medical_staff_user_ids:
     users[user_id - 1]["role"] = "Doctor"
+
+# Update roles for patients in users list
+for user_id in patient_user_ids:
+    users[user_id - 1]["role"] = "Patient"
 
 # Save to JSON files
 with open('users.json', 'w') as file:
